@@ -1,0 +1,3 @@
+recursive-include src/collective
+recursive-include docs/
+include *.cfg *.rst *.in *.py *.txt
