@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 """Setup/installation tests for this package."""
 
-from collective.documentfusion.testing import IntegrationTestCase
+import os
+import datetime
+import tempfile
+
 from plone import api
 
+from collective.documentfusion.testing import IntegrationTestCase
+from plone.namedfile.file import NamedBlobFile, NamedFile
+import subprocess
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
+from zope.interface.declarations import alsoProvides
+from collective.documentfusion.interfaces import ICollectiveDocumentfusionLayer
+from plone.app.blob.adapters.file import BlobbableFile
+
+TEST_LETTER_ODT = os.path.join(os.path.dirname(__file__), 'letter.odt')
 
 class TestInstall(IntegrationTestCase):
     """Test installation of collective.documentfusion into Plone."""
@@ -25,6 +38,37 @@ class TestInstall(IntegrationTestCase):
     # browserlayer.xml
     def test_browserlayer(self):
         """Test that ICollectiveDocumentfusionLayer is registered."""
-        from collective.documentfusion.interfaces import ICollectiveDocumentfusionLayer
         from plone.browserlayer import utils
         self.assertIn(ICollectiveDocumentfusionLayer, utils.registered_layers())
+
+    def test_document_fusion(self):
+        alsoProvides(self.portal.REQUEST, ICollectiveDocumentfusionLayer)
+        content = api.content.create(self.portal, type='letter',
+                           title=u"En réponse...",
+                           file=NamedFile(data=open(TEST_LETTER_ODT).read(),
+                                          filename=u'letter.odt',
+                                          contentType='application/vnd.oasis.opendocument.text'),
+                           sender_name="Thomas Desvenain",
+                           sender_address="57 Quai du Pré Long",
+                           recipient_name="Vincent Fretin",
+                           date=datetime.date(2012, 12, 23))
+
+        notify(ObjectModifiedEvent(content))
+        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        self.assertTrue(generated_stream)
+        self.assertEqual(self.portal.REQUEST.response['content-type'],
+                         'application/pdf')
+        generated_path = tempfile.mktemp(suffix='letter.pdf')
+        generated_file = open(generated_path, 'w')
+        generated_file.write(generated_stream.read())
+        generated_file.close()
+
+        txt_path = tempfile.mktemp(suffix='letter.pdf')
+        subprocess.call(['pdftotext', generated_path, txt_path])
+        txt = open(txt_path).read()
+        self.assertIn('Vincent Fretin', txt)
+        self.assertIn('57 Quai du Pré Long', txt)
+        self.assertIn('2012', txt)
+
+        os.remove(txt_path)
+        os.remove(generated_path)

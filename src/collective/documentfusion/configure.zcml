@@ -1,7 +1,7 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:five="http://namespaces.zope.org/five"
-    xmlns:grok="http://namespaces.zope.org/grok"
+    xmlns:plone="http://namespaces.plone.org/plone"
     xmlns:i18n="http://namespaces.zope.org/i18n"
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     i18n_domain="collective.documentfusion">
@@ -9,14 +9,11 @@
     <i18n:registerTranslations directory="locales" />
 
     <five:registerPackage package="." initialize=".initialize" />
-    
-    <include package="five.grok" />
+
+    <include package="plone.app.dexterity" />
     <include package="plone.api" />
 
     <include package=".browser" />
-    <include package=".content" />
-
-    <grok:grok package="." />
 
     <genericsetup:registerProfile
         name="default"
@@ -32,5 +29,37 @@
         description="Post install import step from collective.documentfusion"
         handler=".setuphandlers.post_install">
     </genericsetup:importStep>
+
+    <include package="plone.behavior" file="meta.zcml" />
+
+    <plone:behavior
+        title="collective.documentfusion: Document fusion"
+        description="We generate a fusion of the document field with the main field of the document or the main field of a related item."
+        provides="collective.documentfusion.interfaces.IDocumentFusion"
+        />
+
+    <plone:behavior
+        title="collective.documentfusion: PDF Generation"
+        description="Generates a PDF version of the main file of the content. Combined with Document fusion behavior, the pdf is generated with a fusion with content fields."
+        provides="collective.documentfusion.interfaces.IPDFGeneration"
+        />
+
+    <subscriber
+        for="collective.documentfusion.interfaces.IPDFGeneration
+             zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+        handler=".subscribers.pdf_generation" />
+
+	<subscriber
+	    for="collective.documentfusion.interfaces.IDocumentFusion
+	         zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+	    handler=".subscribers.document_fusion" />
+
+    <adapter
+        factory=".dexterity.DexterityFusionData"
+        provides="collective.documentfusion.interfaces.IFusionData" />
+
+    <adapter
+        factory=".dexterity.DexteritySourceFile"
+        provides="collective.documentfusion.interfaces.ISourceFile" />
 
 </configure>

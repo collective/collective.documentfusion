@@ -44,6 +44,9 @@ setup(
         'five.grok',
         'plone.api',
         'setuptools',
+        'PyODConverter',
+        'plone.app.dexterity',
+        'plone.behavior',
     ],
     extras_require={
         'test': [

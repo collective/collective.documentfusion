@@ -1,13 +1,24 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:browser="http://namespaces.zope.org/browser"
-    xmlns:plone="http://namespaces.plone.org/plone"
     i18n_domain="collective.documentfusion">
 
-    <!-- Publish static files -->
-    <browser:resourceDirectory
-      name="collective.documentfusion"
-      directory="static"
-      />
+    <browser:viewlet
+        name="collective.documentfusion.download_link"
+        for="collective.documentfusion.interfaces.IGeneration"
+        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+        view="plone.app.layout.globals.interfaces.IViewView"
+        layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
+        class=".views.DownloadLinkViewlet"
+        permission="zope2.View"
+        />
+
+    <browser:view
+        name="getdocumentfusion"
+        for="collective.documentfusion.interfaces.IGeneration"
+        layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
+        class=".views.DownloadView"
+        permission="zope2.View"
+        />
 
 </configure>

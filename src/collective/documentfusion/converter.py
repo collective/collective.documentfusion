@@ -1,0 +1,81 @@
+import os
+import tempfile
+import logging
+
+from PyODConverter import EXPORT_FILTER_MAP, DocumentConverter
+
+from zope.annotation.interfaces import IAnnotations
+from zope.component import getMultiAdapter
+from zope.component.hooks import getSite
+from plone.namedfile.file import NamedBlobFile
+from Products.CMFCore.utils import getToolByName
+
+from collective.documentfusion.interfaces import (
+    IFusionData, ISourceFile,\
+    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
+    DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
+
+logger = logging.getLogger('collective.documentfusion.converter')
+
+
+def filename_split(filename):
+    return filename.rsplit('.', 1)
+
+
+def convert_document(obj, fusion=False, target_ext=None):
+    annotations = IAnnotations(obj)
+    annotations[DATA_STORAGE_KEY] = None
+    annotations[STATUS_STORAGE_KEY] = TASK_IN_PROGRESS
+    named_file = getMultiAdapter((obj, obj.REQUEST), ISourceFile)()
+    source_ext = filename_split(named_file.filename)[1]
+    if source_ext not in EXPORT_FILTER_MAP:
+        return
+
+    if not target_ext:
+        target_ext = source_ext
+
+    if fusion:
+        fusion_data = getMultiAdapter((obj, obj.REQUEST), IFusionData)()
+    else:
+        fusion_data = None
+
+    converted_file = get_converted_file(named_file,
+                                        target_ext,
+                                        fusion_data,
+                                        )
+    if converted_file is None:
+        annotations[STATUS_STORAGE_KEY] = TASK_FAILED
+        annotations[DATA_STORAGE_KEY] = None
+    else:
+        annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
+        annotations[DATA_STORAGE_KEY] = converted_file
+
+
+def get_converted_file(named_file, target_ext, fusion_data, tmp_dir='/tmp'):
+    """Get a converted file in a blob file
+    from source named file, with target extension and fusion data as a dict.
+    """
+    filename = named_file.filename
+    tmp_source_file_path = tempfile.mktemp(
+                                suffix='--%s' % filename)
+    tmp_source_file = open(tmp_source_file_path, 'w')
+    tmp_source_file.write(named_file.data)
+    tmp_source_file.close()
+    base_filename = filename_split(filename)[0]
+    tmp_converted_file_path = tempfile.mktemp(
+                                suffix='--%s.%s' % (base_filename, target_ext))
+
+    DocumentConverter().convert(tmp_source_file_path,
+                                    tmp_converted_file_path,
+                                    data=fusion_data)
+
+    converted_file = open(tmp_converted_file_path)
+    mtregistry = getToolByName(getSite(), 'mimetypes_registry')
+    converted_file_name = os.path.split(tmp_converted_file_path)[-1].split('--')[-1]
+    converted_file_mimetype = mtregistry.lookupExtension(converted_file_name)
+    converted_file_blob = NamedBlobFile(data=converted_file.read(),
+                                        contentType=converted_file_mimetype.mimetypes[0],
+                                        filename=converted_file_name)
+    os.remove(tmp_source_file_path)
+    os.remove(tmp_converted_file_path)
+    return converted_file_blob
