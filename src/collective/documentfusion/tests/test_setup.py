@@ -4,17 +4,18 @@
 import os
 import datetime
 import tempfile
-
-from plone import api
-
-from collective.documentfusion.testing import IntegrationTestCase
-from plone.namedfile.file import NamedBlobFile, NamedFile
 import subprocess
+
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.interface.declarations import alsoProvides
+
+from plone import api
+from plone.namedfile.file import NamedFile
+
+from collective.documentfusion.testing import IntegrationTestCase
 from collective.documentfusion.interfaces import ICollectiveDocumentfusionLayer
-from plone.app.blob.adapters.file import BlobbableFile
+
 
 TEST_LETTER_ODT = os.path.join(os.path.dirname(__file__), 'letter.odt')
 
@@ -69,6 +70,7 @@ class TestInstall(IntegrationTestCase):
         self.assertIn('Vincent Fretin', txt)
         self.assertIn('57 Quai du Pré Long', txt)
         self.assertIn('2012', txt)
+        self.assertIn(u'EN RÉPONSE...', txt)
 
         os.remove(txt_path)
         os.remove(generated_path)
