@@ -1,9 +1,8 @@
 from zope.interface import implements, Interface
-from zope.component import getUtility, adapts
+from zope.component import getUtility, adapts, getMultiAdapter
 from zope.schema import getFieldsInOrder, getFieldNames
 
 from Products.CMFPlone.utils import base_hasattr
-from Products.Five.browser import BrowserView
 from plone import api
 from plone.app.relationfield.behavior import IRelatedItems
 from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
@@ -62,15 +61,30 @@ class DexteritySourceFile(object):
 
     def __init__(self, context, request):
         self.context = context
+        self.request = request
 
-    def __call__(self):
+    def __call__(self, recursive=True):
+        # look for a content with name file field into content
         fti = getUtility(IDexterityFTI, name=self.context.portal_type)
         schema = fti.lookupSchema()
         for name, field in getFieldsInOrder(schema):
             if INamedField.providedBy(field):
                 return getattr(self.context, name)
-        else:
-            return None
+
+        # else, look for a source file field into related items
+        if recursive and IRelatedItems.providedBy(self.context):
+            related_items = [r.to_object for r in self.context.relatedItems]
+            for related_item in related_items:
+
+                source_file = getMultiAdapter((related_item, self.request),
+                                              ISourceFile
+                                              )()
+                if source_file:
+                    return source_file
+                else:
+                    continue
+
+        return None
 
 class DexterityMultipleFusionSources(object):
     adapts(IDexterityContent, Interface)

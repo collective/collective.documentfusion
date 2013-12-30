@@ -3,4 +3,5 @@
  <object name="letter" meta_type="Dexterity FTI"/>
  <object name="label_model" meta_type="Dexterity FTI"/>
  <object name="contact_infos" meta_type="Dexterity FTI"/>
+ <object name="invoice" meta_type="Dexterity FTI"/>
 </object>

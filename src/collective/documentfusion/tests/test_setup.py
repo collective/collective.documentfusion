@@ -16,6 +16,7 @@ from z3c.relationfield.relation import RelationValue
 
 from plone import api
 from plone.namedfile.file import NamedFile
+from plone.app.blob.adapters.file import BlobbableFile
 
 from collective.documentfusion.testing import IntegrationTestCase
 from collective.documentfusion.interfaces import ICollectiveDocumentfusionLayer
@@ -23,6 +24,8 @@ from collective.documentfusion.interfaces import ICollectiveDocumentfusionLayer
 
 TEST_LETTER_ODT = os.path.join(os.path.dirname(__file__), 'letter.odt')
 TEST_LABEL_ODT = os.path.join(os.path.dirname(__file__), 'label.odt')
+TEST_INVOICE_ODT = os.path.join(os.path.dirname(__file__), 'invoice.odt')
+
 
 class TestInstall(IntegrationTestCase):
     """Test installation of collective.documentfusion into Plone."""
@@ -48,6 +51,7 @@ class TestInstall(IntegrationTestCase):
         self.assertIn(ICollectiveDocumentfusionLayer, utils.registered_layers())
 
     def test_document_fusion(self):
+        # data source and model are in the same content
         alsoProvides(self.portal.REQUEST, ICollectiveDocumentfusionLayer)
         content = api.content.create(self.portal, type='letter',
                            title=u"En réponse...",
@@ -81,6 +85,7 @@ class TestInstall(IntegrationTestCase):
         os.remove(generated_path)
 
     def test_document_fusion_with_external_source(self):
+        # data source is in a related content
         alsoProvides(self.portal.REQUEST, ICollectiveDocumentfusionLayer)
         intids = getUtility(IIntIds)
         source_1 = api.content.create(self.portal, type='contact_infos',
@@ -117,5 +122,46 @@ class TestInstall(IntegrationTestCase):
         self.assertIn('24 RUE DES TROIS MOLLETTES', txt)
         self.assertIn('C24', txt)
         self.assertIn(u'59000', txt)
+        os.remove(txt_path)
+        os.remove(generated_path)
+
+    def test_document_fusion_with_external_model(self):
+        # model is in a related content (archetypes)
+        alsoProvides(self.portal.REQUEST, ICollectiveDocumentfusionLayer)
+        intids = getUtility(IIntIds)
+        model = api.content.create(self.portal, type='File',
+                                   id='invoice_model',
+                                   file=BlobbableFile(open(TEST_INVOICE_ODT)),
+                                   )
+
+        content = api.content.create(self.portal, type='invoice',
+                           title=u"Invoice for the Great Company intranet",
+                           bill_date=datetime.date(2012, 12, 23),
+                           customer="The Great company",
+                           order_num='12A',
+                           vat_excluded=1000.0,
+                           vat=0.19,
+                           vat_included=1190.0,
+                           relatedItems=[RelationValue(intids.getId(model))],
+                           )
+
+        notify(ObjectModifiedEvent(content))
+
+        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        self.assertTrue(generated_stream)
+        self.assertEqual(self.portal.REQUEST.response['content-type'],
+                         'application/pdf')
+        generated_path = tempfile.mktemp(suffix='invoice.pdf')
+        generated_file = open(generated_path, 'w')
+        generated_file.write(generated_stream.read())
+        generated_file.close()
+
+        txt_path = tempfile.mktemp(suffix='invoice.pdf')
+        subprocess.call(['pdftotext', generated_path, txt_path])
+        txt = open(txt_path).read()
+        self.assertIn('2012', txt)
+        self.assertIn('12A', txt)
+        self.assertIn('1 000,00 €', txt)
+        self.assertIn('19,00%', txt)
         os.remove(txt_path)
         os.remove(generated_path)

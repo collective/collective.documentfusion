@@ -16,6 +16,9 @@
 
     <include package=".browser" />
 
+    <!-- @TODO : conditional -->
+    <include file="archetypes.zcml" />
+
     <genericsetup:registerProfile
         name="default"
         title="collective.documentfusion"

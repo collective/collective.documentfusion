@@ -6,9 +6,8 @@ from PyODConverter import EXPORT_FILTER_MAP, DocumentConverter
 
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
-from zope.component.hooks import getSite
 from plone.namedfile.file import NamedBlobFile
-from Products.CMFCore.utils import getToolByName
+from plone.app.blob.utils import guessMimetype
 
 from collective.documentfusion.interfaces import (
     IFusionData, ISourceFile, IMultipleFusionSources,\
@@ -41,7 +40,9 @@ def convert_document(obj, target_extension=None,
             external_fusion_sources = getMultiAdapter((obj, obj.REQUEST),
                                                       IMultipleFusionSources)()
             if len(external_fusion_sources) == 1:
-                fusion_data.update(getMultiAdapter((external_fusion_sources[0], obj.REQUEST), IFusionData)())
+                fusion_data.update(getMultiAdapter((external_fusion_sources[0],
+                                                    obj.REQUEST), IFusionData)()
+                                   )
             elif len(external_fusion_sources) == 0:
                 pass
             else:
@@ -76,16 +77,15 @@ def get_converted_file(named_file, target_ext, fusion_data, tmp_dir='/tmp'):
                                 suffix='--%s.%s' % (base_filename, target_ext))
 
     DocumentConverter().convert(tmp_source_file_path,
-                                    tmp_converted_file_path,
-                                    data=fusion_data)
+                                tmp_converted_file_path,
+                                data=fusion_data)
 
     converted_file = open(tmp_converted_file_path)
-    mtregistry = getToolByName(getSite(), 'mimetypes_registry')
     converted_file_name = os.path.split(tmp_converted_file_path)[-1].split('--')[-1]
-    converted_file_mimetype = mtregistry.lookupExtension(converted_file_name)
+    converted_file_mimetype = guessMimetype(converted_file, filename=converted_file_name)
     converted_file_blob = NamedBlobFile(data=converted_file.read(),
-                                        contentType=converted_file_mimetype.mimetypes[0],
-                                        filename=converted_file_name)
+                                        contentType=converted_file_mimetype,
+                                        filename=unicode(converted_file_name))
     os.remove(tmp_source_file_path)
     os.remove(tmp_converted_file_path)
     return converted_file_blob
