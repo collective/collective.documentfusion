@@ -11,6 +11,7 @@
     <five:registerPackage package="." initialize=".initialize" />
 
     <include package="plone.app.dexterity" />
+    <include package="plone.app.relationfield" />
     <include package="plone.api" />
 
     <include package=".browser" />
@@ -34,8 +35,14 @@
 
     <plone:behavior
         title="collective.documentfusion: Document fusion"
-        description="We generate a fusion of the document field with the main field of the document or the main field of a related item."
+        description="We generate a fusion of the file field of the document with other fields of the document."
         provides="collective.documentfusion.interfaces.IDocumentFusion"
+        />
+
+    <plone:behavior
+        title="collective.documentfusion: Multiple document fusion"
+        description="We generate a fusion of the file field of the document with the field of document related items - and if fields are missing, with the fields of the document itself."
+        provides="collective.documentfusion.interfaces.IMultipleDocumentFusion"
         />
 
     <plone:behavior
@@ -54,6 +61,11 @@
 	         zope.lifecycleevent.interfaces.IObjectModifiedEvent"
 	    handler=".subscribers.document_fusion" />
 
+	<subscriber
+	    for="collective.documentfusion.interfaces.IMultipleDocumentFusion
+	         zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+	    handler=".subscribers.multiple_document_fusion" />
+
     <adapter
         factory=".dexterity.DexterityFusionData"
         provides="collective.documentfusion.interfaces.IFusionData" />
@@ -61,5 +73,9 @@
     <adapter
         factory=".dexterity.DexteritySourceFile"
         provides="collective.documentfusion.interfaces.ISourceFile" />
+
+    <adapter
+        factory=".dexterity.DexterityMultipleFusionSources"
+        provides="collective.documentfusion.interfaces.IMultipleFusionSources" />
 
 </configure>

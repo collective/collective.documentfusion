@@ -1,14 +1,16 @@
 from zope.interface import implements, Interface
 from zope.component import getUtility, adapts
-from zope.schema import getFieldsInOrder
+from zope.schema import getFieldsInOrder, getFieldNames
 
-from Products.Five.browser import BrowserView
-from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
-from collective.documentfusion.interfaces import ISourceFile, IFusionData
-from plone.namedfile.interfaces import INamedField
-from zope.schema._schema import getFieldNames
 from Products.CMFPlone.utils import base_hasattr
+from Products.Five.browser import BrowserView
 from plone import api
+from plone.app.relationfield.behavior import IRelatedItems
+from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
+from plone.namedfile.interfaces import INamedField
+
+from collective.documentfusion.interfaces import ISourceFile, IFusionData,\
+    IMultipleFusionSources
 
 
 class DexterityFusionData(object):
@@ -54,7 +56,7 @@ class DexterityFusionData(object):
         return data
 
 
-class DexteritySourceFile(BrowserView):
+class DexteritySourceFile(object):
     adapts(IDexterityContent, Interface)
     implements(ISourceFile)
 
@@ -69,3 +71,17 @@ class DexteritySourceFile(BrowserView):
                 return getattr(self.context, name)
         else:
             return None
+
+class DexterityMultipleFusionSources(object):
+    adapts(IDexterityContent, Interface)
+    implements(IMultipleFusionSources)
+
+
+    def __init__(self, context, request):
+        self.context = context
+
+    def __call__(self):
+        if IRelatedItems.providedBy(self.context):
+            return [r.to_object for r in self.context.relatedItems if r]
+        else:
+            return []

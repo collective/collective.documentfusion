@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
-<object name="letter" meta_type="Dexterity FTI" i18n:domain="plone"
+<object name="contact_infos" meta_type="Dexterity FTI" i18n:domain="plone"
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
- <property name="title" i18n:translate="">Letter</property>
+ <property name="title" i18n:translate="">Contact infos</property>
  <property name="description" i18n:translate="">None</property>
  <property name="icon_expr">string:${portal_url}/document_icon.png</property>
- <property name="factory">letter</property>
- <property name="add_view_expr">string:${folder_url}/++add++letter</property>
+ <property name="factory">contact_infos</property>
+ <property
+    name="add_view_expr">string:${folder_url}/++add++contact_infos</property>
  <property name="link_target"></property>
  <property name="immediate_view">view</property>
  <property name="global_allow">True</property>
@@ -19,48 +20,31 @@
  <property name="default_view_fallback">False</property>
  <property name="add_permission">cmf.AddPortalContent</property>
  <property name="klass">plone.dexterity.content.Container</property>
- <property name="behaviors">
-  <element value="plone.app.content.interfaces.INameFromTitle"/>
-  <element value="collective.documentfusion.interfaces.IDocumentFusion"/>
-  <element value="collective.documentfusion.interfaces.IPDFGeneration"/>
-  <element value="plone.app.dexterity.behaviors.metadata.ICategorization"/>
- </property>
+ <property name="behaviors"/>
  <property name="schema"></property>
  <property
     name="model_source">&lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema"&gt;
     &lt;schema&gt;
-      &lt;field name="file" type="plone.namedfile.field.NamedBlobFile"&gt;
+      &lt;field name="identity" type="zope.schema.TextLine"&gt;
         &lt;description/&gt;
-        &lt;title&gt;file&lt;/title&gt;
+        &lt;title&gt;Identity&lt;/title&gt;
       &lt;/field&gt;
-      &lt;field name="title" type="zope.schema.TextLine"&gt;
+      &lt;field name="address_1" type="zope.schema.TextLine"&gt;
         &lt;description/&gt;
-        &lt;title&gt;Title&lt;/title&gt;
+        &lt;title&gt;Address 1&lt;/title&gt;
       &lt;/field&gt;
-      &lt;field name="description" type="zope.schema.Text"&gt;
+      &lt;field name="address_2" type="zope.schema.TextLine"&gt;
         &lt;description/&gt;
         &lt;required&gt;False&lt;/required&gt;
-        &lt;title&gt;Description&lt;/title&gt;
+        &lt;title&gt;Address 2&lt;/title&gt;
       &lt;/field&gt;
-      &lt;field name="date" type="zope.schema.Date"&gt;
+      &lt;field name="zipcode" type="zope.schema.TextLine"&gt;
         &lt;description/&gt;
-        &lt;title&gt;Date&lt;/title&gt;
+        &lt;title&gt;ZIP code&lt;/title&gt;
       &lt;/field&gt;
-      &lt;field name="sender_name" type="zope.schema.TextLine"&gt;
+      &lt;field name="city" type="zope.schema.TextLine"&gt;
         &lt;description/&gt;
-        &lt;title&gt;Sender name&lt;/title&gt;
-      &lt;/field&gt;
-      &lt;field name="sender_address" type="zope.schema.Text"&gt;
-        &lt;description/&gt;
-        &lt;title&gt;Sender address&lt;/title&gt;
-      &lt;/field&gt;
-      &lt;field name="recipient_name" type="zope.schema.TextLine"&gt;
-        &lt;description/&gt;
-        &lt;title&gt;Recipient name&lt;/title&gt;
-      &lt;/field&gt;
-      &lt;field name="recipient_address" type="zope.schema.Text"&gt;
-        &lt;description/&gt;
-        &lt;title&gt;Recipient address&lt;/title&gt;
+        &lt;title&gt;City&lt;/title&gt;
       &lt;/field&gt;
     &lt;/schema&gt;
   &lt;/model&gt;</property>

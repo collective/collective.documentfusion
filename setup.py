@@ -46,6 +46,7 @@ setup(
         'setuptools',
         'PyODConverter',
         'plone.app.dexterity',
+        'plone.app.relationfield',
         'plone.behavior',
     ],
     extras_require={
