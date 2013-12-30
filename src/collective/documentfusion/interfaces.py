@@ -29,6 +29,12 @@ class IDocumentFusion(IGeneration):
     of the document with the fields of the dexterity content.
     """
 
+class IMultipleDocumentFusion(IGeneration):
+    """We generate a fusion of the file field of the document
+       with the field of document related items
+       - and if fields are missing, with the fields of the document itself.
+    """
+
 class ISourceFile(Interface):
     """Adapter wich provides the source file of a content for fusion
     adapts object and request
@@ -37,4 +43,9 @@ class ISourceFile(Interface):
 class IFusionData(Interface):
     """Adapter wich provides the fusion data of a content
     adapts object and request
+    """
+
+class IMultipleFusionSources(Interface):
+    """Adapter wich provides the source contents for the multiple document fusion
+    from the main document
     """

@@ -11,7 +11,7 @@ from plone.namedfile.file import NamedBlobFile
 from Products.CMFCore.utils import getToolByName
 
 from collective.documentfusion.interfaces import (
-    IFusionData, ISourceFile,\
+    IFusionData, ISourceFile, IMultipleFusionSources,\
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
     DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
 
@@ -22,25 +22,35 @@ def filename_split(filename):
     return filename.rsplit('.', 1)
 
 
-def convert_document(obj, fusion=False, target_ext=None):
+def convert_document(obj, target_extension=None,
+                     make_fusion=False, use_external_sources=False):
     annotations = IAnnotations(obj)
     annotations[DATA_STORAGE_KEY] = None
     annotations[STATUS_STORAGE_KEY] = TASK_IN_PROGRESS
     named_file = getMultiAdapter((obj, obj.REQUEST), ISourceFile)()
-    source_ext = filename_split(named_file.filename)[1]
-    if source_ext not in EXPORT_FILTER_MAP:
+    source_extension = filename_split(named_file.filename)[1]
+    if source_extension not in EXPORT_FILTER_MAP:
         return
 
-    if not target_ext:
-        target_ext = source_ext
+    if not target_extension:
+        target_extension = source_extension
 
-    if fusion:
+    if make_fusion:
         fusion_data = getMultiAdapter((obj, obj.REQUEST), IFusionData)()
+        if use_external_sources:
+            external_fusion_sources = getMultiAdapter((obj, obj.REQUEST),
+                                                      IMultipleFusionSources)()
+            if len(external_fusion_sources) == 1:
+                fusion_data.update(getMultiAdapter((external_fusion_sources[0], obj.REQUEST), IFusionData)())
+            elif len(external_fusion_sources) == 0:
+                pass
+            else:
+                raise NotImplemented
     else:
         fusion_data = None
 
     converted_file = get_converted_file(named_file,
-                                        target_ext,
+                                        target_extension,
                                         fusion_data,
                                         )
     if converted_file is None:
