@@ -14,6 +14,8 @@ from collective.documentfusion.interfaces import (
     IFusionData, ISourceFile, IMergeDataSources,\
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
     DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
+from zope.component._api import getUtility
+from plone.app.async.interfaces import IAsyncService
 
 logger = logging.getLogger('collective.documentfusion.converter')
 
@@ -43,8 +45,22 @@ def _get_blob_from_fs_file(file_path):
     return file_blob
 
 
-def convert_document(obj, target_extension=None,
-                     make_fusion=False, use_external_sources=False):
+def __convert_document(obj, named_file, target_extension, fusion_data):
+    converted_file = get_converted_file(named_file,
+                                    target_extension,
+                                    fusion_data,
+                                    )
+
+    annotations = IAnnotations(obj)
+    if converted_file is None:
+        annotations[STATUS_STORAGE_KEY] = TASK_FAILED
+        annotations[DATA_STORAGE_KEY] = None
+    else:
+        annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
+        annotations[DATA_STORAGE_KEY] = converted_file
+
+
+def convert_document(obj, target_extension=None, make_fusion=False):
     """We store in an annotation the conversion of the model file
        into the target extension
        eventually filled with data get from a source
@@ -66,16 +82,19 @@ def convert_document(obj, target_extension=None,
     else:
         fusion_data = None
 
-    converted_file = get_converted_file(named_file,
-                                    target_extension,
-                                    fusion_data,
-                                    )
-    if converted_file is None:
+    async = getUtility(IAsyncService)
+    async.queueJob(__convert_document, obj, named_file, target_extension, fusion_data)
+
+
+def __merge_document(obj, named_file, fusion_data_list):
+    annotations = IAnnotations(obj)
+    merged_file = get_merged_file(named_file, fusion_data_list)
+    if merged_file is None:
         annotations[STATUS_STORAGE_KEY] = TASK_FAILED
         annotations[DATA_STORAGE_KEY] = None
     else:
         annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
-        annotations[DATA_STORAGE_KEY] = converted_file
+        annotations[DATA_STORAGE_KEY] = merged_file
 
 
 def merge_document(obj):
@@ -92,17 +111,13 @@ def merge_document(obj):
     external_fusion_sources = getMultiAdapter((obj, obj.REQUEST),
                                               IMergeDataSources)()
 
+
     fusion_data_list = [getMultiAdapter((source, obj.REQUEST),
                                         IFusionData)()
                         for source in external_fusion_sources]
 
-    merged_file = get_merged_file(named_file, fusion_data_list)
-    if merged_file is None:
-        annotations[STATUS_STORAGE_KEY] = TASK_FAILED
-        annotations[DATA_STORAGE_KEY] = None
-    else:
-        annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
-        annotations[DATA_STORAGE_KEY] = merged_file
+    async = getUtility(IAsyncService)
+    async.queueJob(__merge_document, obj, named_file, fusion_data_list)
 
 
 def convert_file(tmp_source_file_path, tmp_converted_file_path,
@@ -147,6 +162,10 @@ def get_converted_file(named_file, target_ext, fusion_data):
 
 
 def get_merged_file(named_file, fusion_data_list):
+    """Get a merged pdf file in a blob file
+    from source named file, with target extension
+    and the list of data dictionaries for fusion.
+    """
     tmp_source_file_path = _store_namedfile_in_fs_temp(named_file)
     converted_subfile_pathes = []
     base_filename = filename_split(named_file.filename)[0]

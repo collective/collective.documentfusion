@@ -46,6 +46,7 @@ setup(
         'setuptools',
         'PyODConverter',
         'PyPDF2',
+        'plone.app.async',
         'plone.app.dexterity',
         'plone.app.relationfield',
         'plone.behavior',
