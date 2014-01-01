@@ -46,6 +46,7 @@ def _get_blob_from_fs_file(file_path):
 
 
 def __convert_document(obj, named_file, target_extension, fusion_data):
+    #section of convert_document process that should be run asyncronously
     converted_file = get_converted_file(named_file,
                                     target_extension,
                                     fusion_data,
@@ -92,6 +93,7 @@ def convert_document(obj, target_extension=None, make_fusion=False):
 
 
 def __merge_document(obj, named_file, fusion_data_list):
+    #section of merge_document process that should be run asyncronously
     annotations = IAnnotations(obj)
     merged_file = get_merged_file(named_file, fusion_data_list)
     if merged_file is None:
