@@ -5,8 +5,10 @@ import logging
 from PyODConverter import EXPORT_FILTER_MAP, DocumentConverter
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
+from zope.component import getUtility, getMultiAdapter
+from zope.component.interfaces import ComponentLookupError
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getMultiAdapter
+
 from plone.namedfile.file import NamedBlobFile
 from plone.app.blob.utils import guessMimetype
 
@@ -14,8 +16,6 @@ from collective.documentfusion.interfaces import (
     IFusionData, ISourceFile, IMergeDataSources,\
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
     DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
-from zope.component._api import getUtility
-from plone.app.async.interfaces import IAsyncService
 
 logger = logging.getLogger('collective.documentfusion.converter')
 
@@ -82,8 +82,13 @@ def convert_document(obj, target_extension=None, make_fusion=False):
     else:
         fusion_data = None
 
-    async = getUtility(IAsyncService)
-    async.queueJob(__convert_document, obj, named_file, target_extension, fusion_data)
+    try:
+        from plone.app.async.interfaces import IAsyncService
+        async = getUtility(IAsyncService)
+        async.queueJob(__convert_document, obj, named_file,
+                       target_extension, fusion_data)
+    except (ImportError, ComponentLookupError):
+        __convert_document(obj, named_file, target_extension, fusion_data)
 
 
 def __merge_document(obj, named_file, fusion_data_list):
@@ -116,8 +121,12 @@ def merge_document(obj):
                                         IFusionData)()
                         for source in external_fusion_sources]
 
-    async = getUtility(IAsyncService)
-    async.queueJob(__merge_document, obj, named_file, fusion_data_list)
+    try:
+        from plone.app.async.interfaces import IAsyncService
+        async = getUtility(IAsyncService)
+        async.queueJob(__merge_document, obj, named_file, fusion_data_list)
+    except (ImportError, ComponentLookupError):
+        __merge_document(obj, named_file, fusion_data_list)
 
 
 def convert_file(tmp_source_file_path, tmp_converted_file_path,
