@@ -24,8 +24,7 @@
   <element value="plone.app.content.interfaces.INameFromTitle"/>
   <element value="plone.app.relationfield.behavior.IRelatedItems"/>
   <element
-     value="collective.documentfusion.interfaces.IMultipleDocumentFusion"/>
-  <element value="collective.documentfusion.interfaces.IPDFGeneration"/>
+     value="collective.documentfusion.interfaces.IMergeDocumentFusion"/>
  </property>
  <property name="schema"></property>
  <property

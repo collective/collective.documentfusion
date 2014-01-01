@@ -41,8 +41,8 @@ class DownloadView(BrowserView):
     def __call__(self):
         context = self.context
         annotations = IAnnotations(context)
-        status = annotations[STATUS_STORAGE_KEY]
-        named_file = annotations[DATA_STORAGE_KEY]
+        status = annotations.get(STATUS_STORAGE_KEY, None)
+        named_file = annotations.get(DATA_STORAGE_KEY, None)
         if status != TASK_SUCCEEDED or not named_file:
             return u"" #@TODO: other statuses
 

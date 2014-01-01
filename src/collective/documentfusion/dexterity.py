@@ -9,7 +9,7 @@ from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
 from plone.namedfile.interfaces import INamedField
 
 from collective.documentfusion.interfaces import ISourceFile, IFusionData,\
-    IMultipleFusionSources
+    IMergeDataSources
 
 
 class DexterityFusionData(object):
@@ -86,10 +86,10 @@ class DexteritySourceFile(object):
 
         return None
 
-class DexterityMultipleFusionSources(object):
-    adapts(IDexterityContent, Interface)
-    implements(IMultipleFusionSources)
 
+class DexterityMergeDataSources(object):
+    adapts(IDexterityContent, Interface)
+    implements(IMergeDataSources)
 
     def __init__(self, context, request):
         self.context = context

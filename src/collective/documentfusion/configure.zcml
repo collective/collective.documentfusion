@@ -43,9 +43,9 @@
         />
 
     <plone:behavior
-        title="collective.documentfusion: Multiple document fusion"
-        description="We generate a fusion of the file field of the document with the field of document related items - and if fields are missing, with the fields of the document itself."
-        provides="collective.documentfusion.interfaces.IMultipleDocumentFusion"
+        title="collective.documentfusion: Merged document fusion"
+        description="We generate a pdf merge of fusions of the file field of the document with the field each document related items."
+        provides="collective.documentfusion.interfaces.IMergeDocumentFusion"
         />
 
     <plone:behavior
@@ -65,9 +65,9 @@
 	    handler=".subscribers.document_fusion" />
 
 	<subscriber
-	    for="collective.documentfusion.interfaces.IMultipleDocumentFusion
+	    for="collective.documentfusion.interfaces.IMergeDocumentFusion
 	         zope.lifecycleevent.interfaces.IObjectModifiedEvent"
-	    handler=".subscribers.multiple_document_fusion" />
+	    handler=".subscribers.merge_document_fusion" />
 
     <adapter
         factory=".dexterity.DexterityFusionData"
@@ -78,7 +78,7 @@
         provides="collective.documentfusion.interfaces.ISourceFile" />
 
     <adapter
-        factory=".dexterity.DexterityMultipleFusionSources"
-        provides="collective.documentfusion.interfaces.IMultipleFusionSources" />
+        factory=".dexterity.DexterityMergeDataSources"
+        provides="collective.documentfusion.interfaces.IMergeDataSources" />
 
 </configure>

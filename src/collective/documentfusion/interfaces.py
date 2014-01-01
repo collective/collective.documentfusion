@@ -11,9 +11,9 @@ TASK_FAILED = 'failed'
 DATA_STORAGE_KEY = 'collective.documentfusion.file'
 STATUS_STORAGE_KEY = 'collective.documentfusion.status'
 
+
 class ICollectiveDocumentfusionLayer(IDefaultBrowserLayer):
     """Marker interface that defines a browser layer."""
-
 
 class IGeneration(Interface):
     """
@@ -29,10 +29,10 @@ class IDocumentFusion(IGeneration):
     of the document with the fields of the dexterity content.
     """
 
-class IMultipleDocumentFusion(IGeneration):
-    """We generate a fusion of the file field of the document
-       with the field of document related items
-       - and if fields are missing, with the fields of the document itself.
+class IMergeDocumentFusion(IDocumentFusion):
+    """We generate a pdf
+       that provides the merge of the model
+       filled with fields of each document related items
     """
 
 class ISourceFile(Interface):
@@ -45,7 +45,7 @@ class IFusionData(Interface):
     adapts object and request
     """
 
-class IMultipleFusionSources(Interface):
-    """Adapter wich provides the source contents for the multiple document fusion
+class IMergeDataSources(Interface):
+    """Adapter wich provides the source contents for the document merge
     from the main document
     """

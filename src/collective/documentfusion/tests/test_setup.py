@@ -84,7 +84,7 @@ class TestInstall(IntegrationTestCase):
         os.remove(txt_path)
         os.remove(generated_path)
 
-    def test_document_fusion_with_external_source(self):
+    def test_document_fusion_with_merge_simple(self):
         # data source is in a related content
         alsoProvides(self.portal.REQUEST, ICollectiveDocumentfusionLayer)
         intids = getUtility(IIntIds)
@@ -122,6 +122,65 @@ class TestInstall(IntegrationTestCase):
         self.assertIn('24 RUE DES TROIS MOLLETTES', txt)
         self.assertIn('C24', txt)
         self.assertIn(u'59000', txt)
+        os.remove(txt_path)
+        os.remove(generated_path)
+
+    def test_document_fusion_with_merge_multiple(self):
+        # data source is in a related content
+        # we merge two files from two sources
+        alsoProvides(self.portal.REQUEST, ICollectiveDocumentfusionLayer)
+        intids = getUtility(IIntIds)
+        source_1 = api.content.create(self.portal, type='contact_infos',
+                                      id='desvenain_thomas',
+                                      identity='M. Desvenain Thomas',
+                                      address_1='24 rue des Trois Mollettes',
+                                      address_2='C24',
+                                      zipcode='59000',
+                                      city='Lille')
+
+        source_2 = api.content.create(self.portal, type='contact_infos',
+                                      id='fretin_vincent',
+                                      identity='M. Fretin Vincent',
+                                      address_1='51 r Lac',
+                                      address_2='',
+                                      zipcode='59810',
+                                      city='LESQUIN')
+
+        content = api.content.create(self.portal, type='label_model',
+                           title=u"Modèle d'étiquette",
+                           file=NamedFile(data=open(TEST_LABEL_ODT).read(),
+                                          filename=u'label.odt',
+                                          contentType='application/vnd.oasis.opendocument.text'),
+                           relatedItems=[RelationValue(intids.getId(source_1)),
+                                         RelationValue(intids.getId(source_2))],
+                           )
+
+        notify(ObjectModifiedEvent(content))
+
+        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        self.assertTrue(generated_stream)
+        self.assertEqual(self.portal.REQUEST.response['content-type'],
+                         'application/pdf')
+        generated_path = tempfile.mktemp(suffix='label.pdf')
+        generated_file = open(generated_path, 'w')
+        generated_file.write(generated_stream.read())
+        generated_file.close()
+
+        txt_path = tempfile.mktemp(suffix='label.pdf')
+        subprocess.call(['pdftotext', generated_path, txt_path])
+        txt = open(txt_path).read()
+
+        # label 1
+        self.assertIn('M. DESVENAIN THOMAS', txt)
+        self.assertIn('24 RUE DES TROIS MOLLETTES', txt)
+        self.assertIn('C24', txt)
+        self.assertIn(u'59000', txt)
+
+        # label 2
+        self.assertIn('M. FRETIN VINCENT', txt)
+        self.assertIn(u'59810', txt)
+        self.assertIn(u'LESQUIN', txt)
+
         os.remove(txt_path)
         os.remove(generated_path)
 
