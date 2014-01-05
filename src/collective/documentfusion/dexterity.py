@@ -10,6 +10,7 @@ from plone.namedfile.interfaces import INamedField
 
 from collective.documentfusion.interfaces import ISourceFile, IFusionData,\
     IMergeDataSources
+from zope.component._api import queryMultiAdapter
 
 
 class DexterityFusionData(object):
@@ -87,15 +88,27 @@ class DexteritySourceFile(object):
         return None
 
 
-class DexterityMergeDataSources(object):
-    adapts(IDexterityContent, Interface)
+class RelatedItemsMergeDataSources(object):
+    """Get related items and data source got from direct related items"""
+    adapts(IRelatedItems, Interface)
     implements(IMergeDataSources)
 
     def __init__(self, context, request):
         self.context = context
 
-    def __call__(self):
-        if IRelatedItems.providedBy(self.context):
-            return [r.to_object for r in self.context.relatedItems if r]
+    def get_cascading_data_sources(self, obj):
+        adapter = queryMultiAdapter((obj, self.context.REQUEST),
+                                    interface=IMergeDataSources,
+                                    default=None)
+        if adapter and adapter.__class__ != RelatedItemsMergeDataSources:
+            return adapter()
         else:
-            return []
+            return [obj]
+
+    def __call__(self):
+        sources = []
+        for r in self.context.relatedItems:
+            obj = r.to_object
+            sources.extend(self.get_cascading_data_sources(obj))
+
+        return sources

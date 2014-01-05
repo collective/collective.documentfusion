@@ -78,7 +78,11 @@
         provides="collective.documentfusion.interfaces.ISourceFile" />
 
     <adapter
-        factory=".dexterity.DexterityMergeDataSources"
+        factory=".dexterity.RelatedItemsMergeDataSources"
+        provides="collective.documentfusion.interfaces.IMergeDataSources" />
+
+    <adapter
+        factory=".collection.CollectionMergeDataSources"
         provides="collective.documentfusion.interfaces.IMergeDataSources" />
 
 </configure>
