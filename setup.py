@@ -46,7 +46,6 @@ setup(
         'setuptools',
         'PyODConverter',
         'PyPDF2',
-        'plone.app.async',
         'plone.app.dexterity',
         'plone.app.relationfield',
         'plone.behavior',
@@ -56,6 +55,9 @@ setup(
             'ecreall.helpers.testing',
             'plone.app.testing',
             'plone.app.robotframework',
+        ],
+        'async':[
+            'plone.app.async',
         ],
     },
     entry_points="""

@@ -77,3 +77,12 @@ collective.documentfusion.interfaces.ISourceFile
 
 The way to get a list of data contents is an adapter of context and request that provides interface
 collective.documentfusion.interfaces.IMergeDataSources
+
+
+Async Integration
+=================
+
+It is highly recommended to install and configure plone.app.async
+in combination with this package. Doing so will manage all generations
+processes asynchronously so the user isn't delayed
+so much when saving files.
