@@ -253,6 +253,7 @@ class TestInstall(IntegrationTestCase):
                            relatedItems=[RelationValue(intids.getId(model))],
                            )
 
+        content.unrestrictedTraverse('@@documentfusion-refresh')()
         notify(ObjectModifiedEvent(content))
 
         generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()

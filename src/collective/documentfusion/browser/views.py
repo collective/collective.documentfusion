@@ -11,6 +11,8 @@ from collective.documentfusion.interfaces import DATA_STORAGE_KEY,\
     STATUS_STORAGE_KEY, TASK_IN_PROGRESS, TASK_FAILED
 from collective.documentfusion.interfaces import TASK_SUCCEEDED
 from collective.documentfusion import _
+from collective.documentfusion.subscribers import refresh
+
 
 PMF = MessageFactory('plone')
 
@@ -65,3 +67,16 @@ class DownloadView(BrowserView):
         set_headers(named_file,
                     self.request.response, filename=named_file.filename)
         return stream_data(named_file)
+
+
+class RefreshView(BrowserView):
+
+    def enabled(self):
+        return True
+
+    def default_enabled(self):
+        return False
+
+    def refresh(self):
+        refresh(self.context, None)
+        return self.request.response.redirect("%s/view" % self.context.absolute_url())

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<object name="portal_actions" meta_type="Plone Actions Tool"
+   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+ <object name="document_actions" meta_type="CMF Action Category">
+  <object name="refresh_document_fusion" meta_type="CMF Action"
+          i18n:domain="collective.documentfusion">
+   <property name="title" i18n:translate="">Refresh generated document</property>
+   <property name="description"></property>
+   <property
+      name="url_expr">string:${object_url}/@@documentfusion-refresh</property>
+   <property name="link_target"></property>
+   <property name="icon_expr"></property>
+   <property name="available_expr">context/@@documentfusion-enabled</property>
+   <property name="permissions">
+    <element value="Modify portal content"/>
+   </property>
+   <property name="visible">True</property>
+  </object>
+ </object>
+</object>

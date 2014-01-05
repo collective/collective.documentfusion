@@ -21,4 +21,31 @@
         permission="zope2.View"
         />
 
+    <browser:page
+        name="documentfusion-enabled"
+        for="collective.documentfusion.interfaces.IGeneration"
+        layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
+        class=".views.RefreshView"
+        attribute="enabled"
+        permission="zope2.View"
+        />
+
+    <browser:page
+        name="documentfusion-enabled"
+        for="*"
+        layer="*"
+        class=".views.RefreshView"
+        attribute="default_enabled"
+        permission="zope2.View"
+        />
+
+    <browser:page
+        name="documentfusion-refresh"
+        for="collective.documentfusion.interfaces.IGeneration"
+        layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
+        class=".views.RefreshView"
+        attribute="refresh"
+        permission="zope2.View"
+        />
+
 </configure>

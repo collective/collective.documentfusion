@@ -55,19 +55,9 @@
         />
 
     <subscriber
-        for="collective.documentfusion.interfaces.IPDFGeneration
+        for="collective.documentfusion.interfaces.IGeneration
              zope.lifecycleevent.interfaces.IObjectModifiedEvent"
-        handler=".subscribers.pdf_generation" />
-
-	<subscriber
-	    for="collective.documentfusion.interfaces.IDocumentFusion
-	         zope.lifecycleevent.interfaces.IObjectModifiedEvent"
-	    handler=".subscribers.document_fusion" />
-
-	<subscriber
-	    for="collective.documentfusion.interfaces.IMergeDocumentFusion
-	         zope.lifecycleevent.interfaces.IObjectModifiedEvent"
-	    handler=".subscribers.merge_document_fusion" />
+        handler=".subscribers.refresh" />
 
     <adapter
         factory=".dexterity.DexterityFusionData"

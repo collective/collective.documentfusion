@@ -3,22 +3,10 @@ from collective.documentfusion.interfaces import (
 from collective.documentfusion.converter import convert_document, merge_document
 
 
-def pdf_generation(obj, event):
-    if IDocumentFusion.providedBy(obj):
-        return
-
-    convert_document(obj, make_fusion=False, target_extension='pdf')
-
-
-def document_fusion(obj, event):
+def refresh(obj, event=None):
     if IMergeDocumentFusion.providedBy(obj):
-        return
+        return merge_document(obj)
 
-    if IPDFGeneration.providedBy(obj):
-        convert_document(obj, make_fusion=True, target_extension='pdf')
-    else:
-        convert_document(obj, make_fusion=True, target_extension=None)
-
-
-def merge_document_fusion(obj, event):
-    merge_document(obj)
+    target_extension = IPDFGeneration.providedBy(obj) and 'pdf' or None
+    make_fusion = IDocumentFusion.providedBy(obj)
+    convert_document(obj, make_fusion=make_fusion, target_extension=target_extension)
