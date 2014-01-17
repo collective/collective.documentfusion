@@ -1,3 +1,4 @@
-recursive-include src/collective
-recursive-include docs/
-include *.cfg *.rst *.in *.py *.txt
+recursive-include src *
+recursive-include docs *
+recursive-include buildout.d *
+include *.cfg *.rst *.in *.py
