@@ -13,7 +13,7 @@ from plone.namedfile.file import NamedBlobFile
 from plone.app.blob.utils import guessMimetype
 
 from collective.documentfusion.interfaces import (
-    IFusionData, ISourceFile, IMergeDataSources,\
+    IFusionData, IModelFileSource, IMergeDataSources,\
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
     DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
 
@@ -60,6 +60,8 @@ def __convert_document(obj, named_file, target_extension, fusion_data):
         annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
         annotations[DATA_STORAGE_KEY] = converted_file
 
+    #@TODO: refresh etag
+
 
 def convert_document(obj, target_extension=None, make_fusion=False):
     """We store in an annotation the conversion of the model file
@@ -70,7 +72,7 @@ def convert_document(obj, target_extension=None, make_fusion=False):
     annotations = IAnnotations(obj)
     annotations[DATA_STORAGE_KEY] = None
     annotations[STATUS_STORAGE_KEY] = TASK_IN_PROGRESS
-    named_file = getMultiAdapter((obj, obj.REQUEST), ISourceFile)()
+    named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource)()
     source_extension = filename_split(named_file.filename)[1]
     if source_extension not in EXPORT_FILTER_MAP:
         return
@@ -103,6 +105,8 @@ def __merge_document(obj, named_file, fusion_data_list):
         annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
         annotations[DATA_STORAGE_KEY] = merged_file
 
+    #@TODO: refresh etag
+
 
 def merge_document(obj):
     """We store in an annotation a pdf file
@@ -113,7 +117,7 @@ def merge_document(obj):
     annotations = IAnnotations(obj)
     annotations[DATA_STORAGE_KEY] = None
     annotations[STATUS_STORAGE_KEY] = TASK_IN_PROGRESS
-    named_file = getMultiAdapter((obj, obj.REQUEST), ISourceFile)()
+    named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource)()
 
     external_fusion_sources = getMultiAdapter((obj, obj.REQUEST),
                                               IMergeDataSources)()
@@ -190,6 +194,7 @@ def get_merged_file(named_file, fusion_data_list):
     # merge all fusion files
     suffix = '--%s.pdf' % (base_filename,)
     tmp_merged_file_path = tempfile.mktemp(suffix=suffix)
+    #@TODO: cropping ?
     merge_pdfs(converted_subfile_pathes, tmp_merged_file_path)
 
     # get blob

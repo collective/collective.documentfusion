@@ -8,6 +8,6 @@
 
     <adapter
         factory=".archetypes.SourceFile"
-        provides="collective.documentfusion.interfaces.ISourceFile" />
+        provides="collective.documentfusion.interfaces.IModelFileSource" />
 
 </configure>

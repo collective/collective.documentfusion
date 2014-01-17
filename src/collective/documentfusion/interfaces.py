@@ -15,6 +15,7 @@ STATUS_STORAGE_KEY = 'collective.documentfusion.status'
 class ICollectiveDocumentfusionLayer(IDefaultBrowserLayer):
     """Marker interface that defines a browser layer."""
 
+
 class IGeneration(Interface):
     """
     """
@@ -35,17 +36,17 @@ class IMergeDocumentFusion(IDocumentFusion):
        filled with fields of each document related items
     """
 
-class ISourceFile(Interface):
-    """Adapter wich provides the source file of a content for fusion
-    adapts object and request
+class IModelFileSource(Interface):
+    """Adapter which provides the model file of a content for fusion.
+    Adapts object and request.
     """
 
 class IFusionData(Interface):
-    """Adapter wich provides the fusion data of a content
-    adapts object and request
+    """Adapter which provides the fusion data of a content.
+    Adapts object and request.
     """
 
 class IMergeDataSources(Interface):
-    """Adapter wich provides the source contents for the document merge
-    from the main document
+    """Adapter which provides the source contents for the document merge
+    from the main document.
     """

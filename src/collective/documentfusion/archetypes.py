@@ -2,7 +2,7 @@ from zope.interface import implements, Interface
 from zope.component import adapts
 
 
-from collective.documentfusion.interfaces import ISourceFile
+from collective.documentfusion.interfaces import IModelFileSource
 from Products.Archetypes.interfaces.base import IBaseContent
 from Products.Archetypes.interfaces.field import IFileField
 from plone.app.blob.interfaces import IBlobField
@@ -10,7 +10,7 @@ from plone.app.blob.interfaces import IBlobField
 
 class SourceFile(object):
     adapts(IBaseContent, Interface)
-    implements(ISourceFile)
+    implements(IModelFileSource)
 
     def __init__(self, context, request):
         self.context = context

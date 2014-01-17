@@ -8,7 +8,7 @@ from plone.app.relationfield.behavior import IRelatedItems
 from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
 from plone.namedfile.interfaces import INamedField
 
-from collective.documentfusion.interfaces import ISourceFile, IFusionData,\
+from collective.documentfusion.interfaces import IModelFileSource, IFusionData,\
     IMergeDataSources
 from zope.component._api import queryMultiAdapter
 
@@ -51,6 +51,7 @@ class DexterityFusionData(object):
         fti = getUtility(IDexterityFTI, name=context.portal_type)
         schema = fti.lookupSchema()
         for name in getFieldNames(schema):
+            #@TODO: ignore files
             data[name] = getattr(context, name, None)
 
         return data
@@ -58,7 +59,7 @@ class DexterityFusionData(object):
 
 class DexteritySourceFile(object):
     adapts(IDexterityContent, Interface)
-    implements(ISourceFile)
+    implements(IModelFileSource)
 
     def __init__(self, context, request):
         self.context = context
@@ -78,7 +79,7 @@ class DexteritySourceFile(object):
             for related_item in related_items:
 
                 source_file = getMultiAdapter((related_item, self.request),
-                                              ISourceFile
+                                              IModelFileSource
                                               )()
                 if source_file:
                     return source_file

@@ -65,7 +65,7 @@
 
     <adapter
         factory=".dexterity.DexteritySourceFile"
-        provides="collective.documentfusion.interfaces.ISourceFile" />
+        provides="collective.documentfusion.interfaces.IModelFileSource" />
 
     <adapter
         factory=".dexterity.RelatedItemsMergeDataSources"
