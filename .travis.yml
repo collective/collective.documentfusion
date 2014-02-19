@@ -6,7 +6,7 @@ before_install:
 install:
   - mkdir -p buildout-cache/{eggs,downloads}
   - python bootstrap.py -c travis.cfg
-  - bin/buildout -cN travis.cfg
+  - bin/buildout -Nc travis.cfg
 before_script:
   - soffice --headless --accept="socket,port=2002;urp;"&
 script:
