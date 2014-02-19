@@ -53,7 +53,6 @@ setup(
         'test': [
             'ecreall.helpers.testing',
             'plone.app.testing',
-            'plone.app.robotframework',
         ],
         'async':[
             'plone.app.async',
