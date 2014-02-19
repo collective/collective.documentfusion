@@ -6,6 +6,7 @@ from plone.app.layout.viewlets.common import ViewletBase
 from plone.namedfile.utils import stream_data, set_headers
 from Products.Five.browser import BrowserView
 from Products.CMFCore.utils import getToolByName
+from Products.statusmessages.interfaces import IStatusMessage
 
 from collective.documentfusion.interfaces import DATA_STORAGE_KEY,\
     STATUS_STORAGE_KEY, TASK_IN_PROGRESS, TASK_FAILED
@@ -38,6 +39,8 @@ class DownloadLinkViewlet(ViewletBase):
             return PORTAL_MESSAGE % {'statusid': 'warning',
                                      'status': PMF(u"Error"),
                                      'msg': _(u"Document generation failed, please retry or contact your administrator")}
+        elif not status:
+            return u""
 
         url = u"%s/getdocumentfusion" % context.absolute_url()
         title = translate(_(u"Get the generated file."), context=self.request)
@@ -61,12 +64,22 @@ class DownloadView(BrowserView):
         annotations = IAnnotations(context)
         status = annotations.get(STATUS_STORAGE_KEY, None)
         named_file = annotations.get(DATA_STORAGE_KEY, None)
-        if status != TASK_SUCCEEDED or not named_file:
-            return u"" #@TODO: other statuses
+        if status == TASK_SUCCEEDED or not named_file:
+            set_headers(named_file,
+                        self.request.response, filename=named_file.filename)
+            return stream_data(named_file)
 
-        set_headers(named_file,
-                    self.request.response, filename=named_file.filename)
-        return stream_data(named_file)
+        if status == TASK_IN_PROGRESS:
+            IStatusMessage(self.request).add(_(u"Document generation in progress, please retry later..."),
+                                             type='warning')
+        elif status == TASK_FAILED:
+            IStatusMessage(self.request).add(_(u"Document generation failed, please retry document generation or contact your administrator..."),
+                                             type='error')
+        elif not status:
+            IStatusMessage(self.request).add(_(u"No document generated here"),
+                                             type='error')
+
+        self.request.response.redirect(self.context.absolute_url()+'/view')
 
 
 class RefreshView(BrowserView):

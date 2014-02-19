@@ -1,0 +1,50 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2014-02-04 09:24+0000\n"
+"PO-Revision-Date: 2014-02-04 10:28+0100\n"
+"Last-Translator: Thomas Desvenain <thomasdesvenain@ecreall.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language-Code: en\n"
+"Language-Name: English\n"
+"Preferred-Encodings: utf-8 latin1\n"
+"Domain: DOMAIN\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: ../browser/views.py:75
+msgid ""
+"Document generation failed, please retry document generation or contact your "
+"administrator..."
+msgstr ""
+"La génération du document a échoué, veuillez réessayer la génération ou "
+"contacter votre administrateur"
+
+#: ../browser/views.py:41
+msgid "Document generation failed, please retry or contact your administrator"
+msgstr ""
+"La génération du document a échoué, veuillez réessayer ou contacter votre "
+"administrateur"
+
+#: ../browser/views.py:73
+msgid "Document generation in progress, please retry later..."
+msgstr "Génération du document en cours, veuillez réessayer plus tard..."
+
+#: ../browser/views.py:46
+msgid "Get the generated file."
+msgstr "Télécharger le document généré"
+
+#: ../browser/views.py:77
+msgid "No document generated here"
+msgstr "Aucun document généré à télécharger"
+
+#: ../browser/views.py:37
+msgid "Processing document generation, please refresh the page..."
+msgstr "Génération du document en cours, veuillez rafraîchir la page..."
+
+#: ../profiles/default/actions.xml
+msgid "Refresh generated document"
+msgstr "Mettre à jour le document généré"
