@@ -150,12 +150,12 @@ def merge_pdfs(source_file_pathes,
                merge_file_path):
     """Merge a list of source files into a new file using uno and libreoffice
     """
-
+    
     merger = PdfFileMerger()
     for source_file_path in source_file_pathes:
         merger.append(PdfFileReader(open(source_file_path, 'rb')))
 
-    merger.write(merge_file_path)
+    merger.write(str(merge_file_path))
 
 
 def get_converted_file(named_file, target_ext, fusion_data):
@@ -189,6 +189,7 @@ def get_merged_file(named_file, fusion_data_list):
         suffix = '--%s-%s.pdf' % (num, base_filename)
         tmp_converted_subfile_path = tempfile.mktemp(suffix=suffix)
         convert_file(tmp_source_file_path, tmp_converted_subfile_path, fusion_data)
+        assert os.path.exists(tmp_converted_subfile_path)
         converted_subfile_pathes.append(tmp_converted_subfile_path)
 
     # merge all fusion files
