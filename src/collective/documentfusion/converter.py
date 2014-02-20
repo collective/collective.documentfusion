@@ -25,11 +25,11 @@ def filename_split(filename):
 
 
 def _store_namedfile_in_fs_temp(named_file):
-    fs_path = tempfile.mktemp(
-                                suffix='--%s' % named_file.filename)
+    fs_path = tempfile.mktemp(suffix='--%s' % named_file.filename)
     file_obj = open(fs_path, 'w')
     file_obj.write(named_file.data)
     file_obj.close()
+    assert os.path.exists(fs_path)
     return fs_path
 
 
@@ -144,6 +144,7 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path,
     DocumentConverter().convert(tmp_source_file_path,
                                 tmp_converted_file_path,
                                 data=fusion_data)
+    assert os.path.exists(tmp_converted_file_path)
 
 
 def merge_pdfs(source_file_pathes,
@@ -189,7 +190,6 @@ def get_merged_file(named_file, fusion_data_list):
         suffix = '--%s-%s.pdf' % (num, base_filename)
         tmp_converted_subfile_path = tempfile.mktemp(suffix=suffix)
         convert_file(tmp_source_file_path, tmp_converted_subfile_path, fusion_data)
-        assert os.path.exists(tmp_converted_subfile_path)
         converted_subfile_pathes.append(tmp_converted_subfile_path)
 
     # merge all fusion files
