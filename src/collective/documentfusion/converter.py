@@ -1,8 +1,10 @@
+import traceback
 import os
 import tempfile
 import logging
 
-from PyODConverter import EXPORT_FILTER_MAP, DocumentConverter
+from PyODConverter import EXPORT_FILTER_MAP, DocumentConverter,\
+    DocumentConversionException
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
 from zope.component import getUtility, getMultiAdapter
@@ -47,11 +49,11 @@ def _get_blob_from_fs_file(file_path):
 
 def __convert_document(obj, named_file, target_extension, fusion_data):
     #section of convert_document process that should be run asyncronously
+    import pdb;pdb.set_trace()
     converted_file = get_converted_file(named_file,
                                     target_extension,
                                     fusion_data,
                                     )
-
     annotations = IAnnotations(obj)
     if converted_file is None:
         annotations[STATUS_STORAGE_KEY] = TASK_FAILED
@@ -151,7 +153,7 @@ def merge_pdfs(source_file_pathes,
                merge_file_path):
     """Merge a list of source files into a new file using uno and libreoffice
     """
-    
+
     merger = PdfFileMerger()
     for source_file_path in source_file_pathes:
         merger.append(PdfFileReader(open(source_file_path, 'rb')))
@@ -168,7 +170,11 @@ def get_converted_file(named_file, target_ext, fusion_data):
     suffix = '--%s.%s' % (filename_split(named_file.filename)[0], target_ext)
     tmp_converted_file_path = tempfile.mktemp(suffix=suffix)
 
-    convert_file(tmp_source_file_path, tmp_converted_file_path, fusion_data)
+    try:
+        convert_file(tmp_source_file_path, tmp_converted_file_path, fusion_data)
+    except DocumentConversionException:
+        logger.error(traceback.format_exc())
+        return None
 
     converted_file_blob = _get_blob_from_fs_file(tmp_converted_file_path)
 

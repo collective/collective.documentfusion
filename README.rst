@@ -65,6 +65,11 @@ Model file and collection
 If you have selected a collection among the related items,
 each result of the collection will be used as a source.
 
+Run LibreOffice as a service
+----------------------------
+
+soffice --headless --accept="socket,host=127.0.0.1,port=2002;urp;" --nofirststartwizard
+
 
 Extend
 ======
