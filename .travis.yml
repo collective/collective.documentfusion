@@ -5,6 +5,8 @@ python:
   - 2.7
 before_install:
   - sudo apt-get install -qq python-uno
+  - sudo mkdir /tmp
+  - sudo chmod 777 /tmp
 install:
   - mkdir -p buildout-cache/{eggs,downloads}
   - python bootstrap.py -c travis.cfg
