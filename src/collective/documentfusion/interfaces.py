@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Module where all interfaces, events and exceptions live."""
+from zope.schema import ASCIILine, Int
 from zope.component import Interface
 from zope.publisher.interfaces.browser import IDefaultBrowserLayer
-
+from collective.documentfusion import _
 
 TASK_SUCCEEDED = 'success'
 TASK_IN_PROGRESS = 'in_progress'
@@ -50,3 +51,11 @@ class IMergeDataSources(Interface):
     """Adapter which provides the source contents for the document merge
     from the main document.
     """
+
+class ISOfficeSettings(Interface):
+
+    port = ASCIILine(title=_(u"LibreOffice port"),
+                    description=_(u"The port used by LibreOffice service"))
+
+    host = Int(title=_(u"LibreOffice host"),
+               description=_(u"The port used by LibreOffice service"))

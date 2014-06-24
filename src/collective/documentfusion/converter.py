@@ -11,13 +11,16 @@ from zope.component import getUtility, getMultiAdapter
 from zope.component.interfaces import ComponentLookupError
 from zope.annotation.interfaces import IAnnotations
 
+from plone.registry.interfaces import IRegistry
 from plone.namedfile.file import NamedBlobFile
 from plone.app.blob.utils import guessMimetype
 
 from collective.documentfusion.interfaces import (
+    ISOfficeSettings,
     IFusionData, IModelFileSource, IMergeDataSources,\
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
     DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
+from zope.component.hooks import getSite
 
 logger = logging.getLogger('collective.documentfusion.converter')
 
@@ -49,7 +52,6 @@ def _get_blob_from_fs_file(file_path):
 
 def __convert_document(obj, named_file, target_extension, fusion_data):
     #section of convert_document process that should be run asyncronously
-    import pdb;pdb.set_trace()
     converted_file = get_converted_file(named_file,
                                     target_extension,
                                     fusion_data,
@@ -143,7 +145,9 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path,
     filling properties, bookmarks and fields with data
     using libreoffice service
     """
-    DocumentConverter().convert(tmp_source_file_path,
+    settings = getUtility(IRegistry).forInterface(ISOfficeSettings)
+    DocumentConverter(listener=(settings.host, settings.port)
+                      ).convert(tmp_source_file_path,
                                 tmp_converted_file_path,
                                 data=fusion_data)
     assert os.path.exists(tmp_converted_file_path)

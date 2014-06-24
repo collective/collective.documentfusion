@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<registry>
+  <record name="collective.documentfusion.interfaces.ISOfficeSettings.port"
+          interface="collective.documentfusion.interfaces.ISOfficeSettings"
+          field="port">
+    <field type="plone.registry.field.Int">
+      <default>2002</default>
+      <description>LibreOffice port</description>
+      <required>True</required>
+      <title>The port used by LibreOffice service</title>
+    </field>
+    <value>2002</value>
+  </record>
+  <record name="collective.documentfusion.interfaces.ISOfficeSettings.host"
+          interface="collective.documentfusion.interfaces.ISOfficeSettings"
+          field="host">
+    <field type="plone.registry.field.ASCIILine">
+      <default>localhost</default>
+      <description>LibreOffice host</description>
+      <required>True</required>
+      <title>The host name of LibreOffice service</title>
+    </field>
+    <value>localhost</value>
+  </record>
+</registry>
