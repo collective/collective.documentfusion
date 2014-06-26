@@ -152,7 +152,7 @@ class CollectionFieldRenderer(BaseFieldRenderer):
         sub_renderer = getMultiAdapter((self.field.value_type,
                                         self.context, self.request),
                                         interface=IExportable)
-        return value and u"\n".join([sub_renderer.render_collection_entry(obj, v)
+        return value and u"\n".join(["- " + sub_renderer.render_collection_entry(obj, v)
                                      for v in value]) or u""
 
 

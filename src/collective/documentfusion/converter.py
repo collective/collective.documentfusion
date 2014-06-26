@@ -7,6 +7,7 @@ from PyODConverter import EXPORT_FILTER_MAP, DocumentConverter,\
     DocumentConversionException
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
+from DateTime import DateTime
 from zope.component import getUtility, getMultiAdapter
 from zope.component.interfaces import ComponentLookupError
 from zope.annotation.interfaces import IAnnotations
@@ -20,7 +21,6 @@ from collective.documentfusion.interfaces import (
     IFusionData, IModelFileSource, IMergeDataSources,\
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
     DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
-from zope.component.hooks import getSite
 
 logger = logging.getLogger('collective.documentfusion.converter')
 
@@ -57,12 +57,18 @@ def __convert_document(obj, named_file, target_extension, fusion_data):
                                     fusion_data,
                                     )
     annotations = IAnnotations(obj)
+    previous_status = annotations[STATUS_STORAGE_KEY]
     if converted_file is None:
-        annotations[STATUS_STORAGE_KEY] = TASK_FAILED
+        new_status = TASK_FAILED
         annotations[DATA_STORAGE_KEY] = None
     else:
-        annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
+        new_status = TASK_SUCCEEDED
         annotations[DATA_STORAGE_KEY] = converted_file
+
+    annotations[STATUS_STORAGE_KEY] = new_status
+    if new_status != previous_status:
+        obj.setModificationDate(DateTime())
+
 
     #@TODO: refresh etag
 
