@@ -34,11 +34,13 @@ class DownloadLinkViewlet(ViewletBase):
         if status == TASK_IN_PROGRESS:
             return PORTAL_MESSAGE % {'statusid': 'info',
                                      'status': PMF(u"Info"),
-                                     'msg': _(u"Processing document generation, please refresh the page...")}
+                                     'msg': translate(_(u"Processing document generation, please refresh the page..."),
+                                                      context=self.request)}
         elif status == TASK_FAILED:
             return PORTAL_MESSAGE % {'statusid': 'warning',
                                      'status': PMF(u"Error"),
-                                     'msg': _(u"Document generation failed, please retry or contact your administrator")}
+                                     'msg': translate(_(u"Document generation failed, please retry or contact your administrator"),
+                                                      context=self.request)}
         elif not status:
             return u""
 

@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2014-02-04 09:24+0000\n"
+"POT-Creation-Date: 2014-06-26 09:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI +ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,23 +17,31 @@ msgstr ""
 "Preferred-Encodings: utf-8 latin1\n"
 "Domain: collective.documentfusion\n"
 
-#: ../browser/views.py:75
+#: ../browser/views.py:78
 msgid "Document generation failed, please retry document generation or contact your administrator..."
 msgstr ""
 
-#: ../browser/views.py:41
+#: ../browser/views.py:42
 msgid "Document generation failed, please retry or contact your administrator"
 msgstr ""
 
-#: ../browser/views.py:73
+#: ../browser/views.py:75
 msgid "Document generation in progress, please retry later..."
 msgstr ""
 
-#: ../browser/views.py:46
+#: ../browser/views.py:48
 msgid "Get the generated file."
 msgstr ""
 
-#: ../browser/views.py:77
+#: ../interfaces.py:60
+msgid "LibreOffice host"
+msgstr ""
+
+#: ../interfaces.py:57
+msgid "LibreOffice port"
+msgstr ""
+
+#: ../browser/views.py:81
 msgid "No document generated here"
 msgstr ""
 
@@ -43,5 +51,13 @@ msgstr ""
 
 #: ../profiles/default/actions.xml
 msgid "Refresh generated document"
+msgstr ""
+
+#: ../interfaces.py:61
+msgid "The hostname from where LibreOffice is served"
+msgstr ""
+
+#: ../interfaces.py:58
+msgid "The port used by LibreOffice service"
 msgstr ""
 

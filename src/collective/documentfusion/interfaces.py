@@ -58,4 +58,4 @@ class ISOfficeSettings(Interface):
                     description=_(u"The port used by LibreOffice service"))
 
     host = Int(title=_(u"LibreOffice host"),
-               description=_(u"The port used by LibreOffice service"))
+               description=_(u"The hostname from where LibreOffice is served"))
