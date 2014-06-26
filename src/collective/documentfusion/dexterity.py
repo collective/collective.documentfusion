@@ -1,6 +1,8 @@
 from zope.interface import implements, Interface
 from zope.component import getUtility, adapts, getMultiAdapter
-from zope.schema import getFieldsInOrder, getFieldNames
+from zope.component.interfaces import ComponentLookupError
+from zope.schema import getFieldsInOrder
+from zope.schema import getFields
 
 from Products.CMFPlone.utils import base_hasattr
 from plone import api
@@ -8,9 +10,26 @@ from plone.app.relationfield.behavior import IRelatedItems
 from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
 from plone.namedfile.interfaces import INamedField
 
+from zope.component._api import queryMultiAdapter
+from plone.behavior.interfaces import IBehavior
+from plone.autoform.interfaces import IFormFieldProvider
+
 from collective.documentfusion.interfaces import IModelFileSource, IFusionData,\
     IMergeDataSources
-from zope.component._api import queryMultiAdapter
+from collective.documentfusion.dexterityfields import IExportable
+
+
+
+def get_fields(fti):
+    schema = fti.lookupSchema()
+    fields = getFields(schema)
+    for behavior_id in fti.behaviors:
+        schema = getUtility(IBehavior, behavior_id).interface
+        if not IFormFieldProvider.providedBy(schema):
+            continue
+        fields.update(getFields(schema))
+
+    return fields
 
 
 class DexterityFusionData(object):
@@ -19,6 +38,7 @@ class DexterityFusionData(object):
 
     def __init__(self, context, request):
         self.context = context
+        self.request = request
 
     def __call__(self):
 
@@ -49,12 +69,22 @@ class DexterityFusionData(object):
             data['Keywords'] = keywords
 
         fti = getUtility(IDexterityFTI, name=context.portal_type)
-        schema = fti.lookupSchema()
-        for name in getFieldNames(schema):
-            #@TODO: ignore files
-            data[name] = getattr(context, name, None)
+        fields = get_fields(fti)
+
+        for name in fields:
+            try:
+                renderer = getMultiAdapter((fields[name], self.context, self.request),
+                                     interface=IExportable,
+                                     name=name)
+            except ComponentLookupError:
+                renderer = getMultiAdapter((fields[name], self.context, self.request),
+                                     interface=IExportable)
+
+            render = renderer.render(self.context)
+            data[name] = render
 
         return data
+
 
 
 class DexteritySourceFile(object):
