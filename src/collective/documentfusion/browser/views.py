@@ -66,7 +66,7 @@ class DownloadView(BrowserView):
         annotations = IAnnotations(context)
         status = annotations.get(STATUS_STORAGE_KEY, None)
         named_file = annotations.get(DATA_STORAGE_KEY, None)
-        if status == TASK_SUCCEEDED or not named_file:
+        if status == TASK_SUCCEEDED:
             set_headers(named_file,
                         self.request.response, filename=named_file.filename)
             return stream_data(named_file)
@@ -77,7 +77,7 @@ class DownloadView(BrowserView):
         elif status == TASK_FAILED:
             IStatusMessage(self.request).add(_(u"Document generation failed, please retry document generation or contact your administrator..."),
                                              type='error')
-        elif not status:
+        elif not status or not named_file:
             IStatusMessage(self.request).add(_(u"No document generated here"),
                                              type='error')
 
