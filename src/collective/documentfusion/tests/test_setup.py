@@ -11,6 +11,7 @@ from zope.component import getUtility
 from zope.interface.declarations import alsoProvides
 from zope.intid.interfaces import IIntIds
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.annotation.interfaces import IAnnotations
 
 from z3c.relationfield.relation import RelationValue
 
@@ -20,6 +21,8 @@ from plone.app.blob.adapters.file import BlobbableFile
 
 from collective.documentfusion.testing import IntegrationTestCase
 from collective.documentfusion.interfaces import ICollectiveDocumentfusionLayer
+from collective.documentfusion.interfaces import (
+    STATUS_STORAGE_KEY, TASK_SUCCEEDED)
 
 
 TEST_LETTER_ODT = os.path.join(os.path.dirname(__file__), 'letter.odt')
@@ -49,6 +52,11 @@ class TestInstall(IntegrationTestCase):
                            date=datetime.date(2012, 12, 23))
 
         notify(ObjectModifiedEvent(content))
+
+        annotations = IAnnotations(content)
+        status = annotations.get(STATUS_STORAGE_KEY, None)
+        self.assertEqual(status, TASK_SUCCEEDED)
+
         generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
         self.assertTrue(generated_stream)
         self.assertEqual(self.portal.REQUEST.response['content-type'],
