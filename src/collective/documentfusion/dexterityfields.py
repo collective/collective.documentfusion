@@ -214,12 +214,12 @@ try:
             return self.render_collection_entry(obj, value)
 
 except:
-    HAS_RELATIONFIELD = False
+    HAS_DATAGRIDFIELD = False
 
 
 try:
     from collective.contact.widget.interfaces import IContactChoice
-    HAS_RELATIONFIELD = True
+    HAS_CONTACT_CORE = True
     class ContactChoiceFieldRenderer(BaseFieldRenderer):
         adapts(IContactChoice, Interface, Interface)
 
