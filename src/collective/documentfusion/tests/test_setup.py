@@ -68,7 +68,7 @@ class TestInstall(IntegrationTestCase):
 
         txt_path = tempfile.mktemp(suffix='letter.pdf')
         subprocess.call(['pdftotext', generated_path, txt_path])
-        txt = open(txt_path).read().replace(r'\xc2\xa', ' ')
+        txt = open(txt_path).read().replace(r'\xc2\xa0', ' ')
         self.assertIn('Vincent Fretin', txt)
         self.assertIn('57 Quai du Pré Long', txt)
         self.assertIn('2012', txt)
@@ -110,7 +110,7 @@ class TestInstall(IntegrationTestCase):
 
         txt_path = tempfile.mktemp(suffix='label.pdf')
         subprocess.call(['pdftotext', generated_path, txt_path])
-        txt = open(txt_path).read().replace(r'\xc2\xa', ' ')
+        txt = open(txt_path).read().replace(r'\xc2\xa0', ' ')
         self.assertIn('M. DESVENAIN THOMAS', txt)
         self.assertIn('24 RUE DES TROIS MOLLETTES', txt)
         self.assertIn('C24', txt)
@@ -161,7 +161,7 @@ class TestInstall(IntegrationTestCase):
 
         txt_path = tempfile.mktemp(suffix='label.pdf')
         subprocess.call(['pdftotext', generated_path, txt_path])
-        txt = open(txt_path).read().replace(r'\xc2\xa', ' ')
+        txt = open(txt_path).read().replace(r'\xc2\xa0', ' ')
 
         # label 1
         self.assertIn('M. DESVENAIN THOMAS', txt)
