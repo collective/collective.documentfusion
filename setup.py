@@ -43,8 +43,9 @@ setup(
     install_requires=[
         'plone.api',
         'setuptools',
-        'PyODConverter',
+        'requests',
         'PyPDF2',
+        'py3o.fusion',
         'plone.app.dexterity',
         'plone.app.relationfield',
         'plone.behavior',

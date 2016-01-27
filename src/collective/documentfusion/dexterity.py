@@ -1,3 +1,4 @@
+import datetime
 from zope.interface import implements, Interface
 from zope.component import getUtility, adapts, getMultiAdapter
 from zope.component.interfaces import ComponentLookupError
@@ -81,6 +82,8 @@ class DexterityFusionData(object):
                                      interface=IExportable)
 
             render = renderer.render(self.context)
+            if type(render) is datetime.date:
+                render = render.strftime("%Y-%m-%d")
             data[name] = render
 
         return data

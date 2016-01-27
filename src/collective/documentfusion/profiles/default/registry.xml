@@ -4,21 +4,21 @@
           interface="collective.documentfusion.interfaces.ISOfficeSettings"
           field="port">
     <field type="plone.registry.field.Int">
-      <default>2002</default>
-      <description>LibreOffice port</description>
+      <default>8765</default>
+      <description>py3o.fusion port</description>
       <required>True</required>
-      <title>The port used by LibreOffice service</title>
+      <title>py3o.fusion port</title>
     </field>
-    <value>2002</value>
+    <value>8765</value>
   </record>
   <record name="collective.documentfusion.interfaces.ISOfficeSettings.host"
           interface="collective.documentfusion.interfaces.ISOfficeSettings"
           field="host">
     <field type="plone.registry.field.ASCIILine">
       <default>localhost</default>
-      <description>LibreOffice host</description>
+      <description>py3o.fusion host</description>
       <required>True</required>
-      <title>The host name of LibreOffice service</title>
+      <title>py3o.fusion host</title>
     </field>
     <value>localhost</value>
   </record>
