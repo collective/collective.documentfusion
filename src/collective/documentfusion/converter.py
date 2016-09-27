@@ -4,10 +4,12 @@ import tempfile
 import logging
 
 import requests
+from requests.exceptions import ConnectionError
 import json
 from PyPDF2 import PdfFileMerger, PdfFileReader
 
 from DateTime import DateTime
+
 from zope.component import getUtility, getMultiAdapter
 from zope.component.interfaces import ComponentLookupError
 from zope.annotation.interfaces import IAnnotations
@@ -165,7 +167,7 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
     req = requests.post(
         "http://%s:%s/form" % (settings.host, settings.port),
         data=fields,
-        files=files,
+        files=files
     )
     if req.status_code != 400:
         chunk_size = 1024
@@ -206,15 +208,20 @@ def get_converted_file(named_file, target_ext, fusion_data):
             target_ext,
             fusion_data
         )
-    except Exception:
-        logger.error(traceback.format_exc())
+        return _get_blob_from_fs_file(tmp_converted_file_path)
+    except ConnectionError:
+        logger.error("Connection to libreoffice unavailable")
         return None
+    finally:
+        try:
+            os.remove(tmp_source_file_path)
+        except OSError:
+            pass
 
-    converted_file_blob = _get_blob_from_fs_file(tmp_converted_file_path)
-
-    os.remove(tmp_source_file_path)
-    os.remove(tmp_converted_file_path)
-    return converted_file_blob
+        try:
+            os.remove(tmp_converted_file_path)
+        except OSError:
+            pass
 
 
 def get_merged_file(named_file, fusion_data_list):
