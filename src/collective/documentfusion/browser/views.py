@@ -12,7 +12,7 @@ from collective.documentfusion.interfaces import DATA_STORAGE_KEY,\
     STATUS_STORAGE_KEY, TASK_IN_PROGRESS, TASK_FAILED
 from collective.documentfusion.interfaces import TASK_SUCCEEDED
 from collective.documentfusion import _
-from collective.documentfusion.subscribers import refresh
+from collective.documentfusion.converter import refresh_conversion, apply_specific_conversion
 
 
 PMF = MessageFactory('plone')
@@ -24,9 +24,10 @@ PORTAL_MESSAGE = u"""
             </dl>
             """
 
+
 class DownloadLinkViewlet(ViewletBase):
 
-    def render(self):
+    def index(self):
         context = self.context
         annotations = IAnnotations(context)
         status = annotations.get(STATUS_STORAGE_KEY, None)
@@ -34,13 +35,18 @@ class DownloadLinkViewlet(ViewletBase):
         if status == TASK_IN_PROGRESS:
             return PORTAL_MESSAGE % {'statusid': 'info',
                                      'status': PMF(u"Info"),
-                                     'msg': translate(_(u"Processing document generation, please refresh the page..."),
-                                                      context=self.request)}
+                                     'msg': translate(
+                                         _(u"Processing document generation, "
+                                           u"please refresh the page..."),
+                                         context=self.request)}
         elif status == TASK_FAILED:
             return PORTAL_MESSAGE % {'statusid': 'warning',
                                      'status': PMF(u"Error"),
-                                     'msg': translate(_(u"Document generation failed, please retry or contact your administrator"),
-                                                      context=self.request)}
+                                     'msg': translate(
+                                         _(u"Document generation failed, "
+                                           u"please retry "
+                                           u"or contact your administrator"),
+                                         context=self.request)}
         elif not status:
             return u""
 
@@ -62,26 +68,32 @@ class DownloadLinkViewlet(ViewletBase):
 class DownloadView(BrowserView):
 
     def __call__(self):
+        conversion = self.request.get('conversion', '')
+
         context = self.context
+        # TODO: delegate storage
         annotations = IAnnotations(context)
-        status = annotations.get(STATUS_STORAGE_KEY, None)
-        named_file = annotations.get(DATA_STORAGE_KEY, None)
+        status = annotations.get(STATUS_STORAGE_KEY + conversion, None)
+        named_file = annotations.get(DATA_STORAGE_KEY + conversion, None)
         if status == TASK_SUCCEEDED:
             set_headers(named_file,
                         self.request.response, filename=named_file.filename)
             return stream_data(named_file)
 
         if status == TASK_IN_PROGRESS:
-            IStatusMessage(self.request).add(_(u"Document generation in progress, please retry later..."),
-                                             type='warning')
+            IStatusMessage(self.request).add(
+                _(u"Document generation in progress, please retry later..."),
+                type='warning')
         elif status == TASK_FAILED:
-            IStatusMessage(self.request).add(_(u"Document generation failed, please retry document generation or contact your administrator..."),
-                                             type='error')
+            IStatusMessage(self.request).add(
+               _(u"Document generation failed, please retry document generation"
+                 u" or contact your administrator..."),
+               type='error')
         elif not status or not named_file:
             IStatusMessage(self.request).add(_(u"No document generated here"),
                                              type='error')
 
-        self.request.response.redirect(self.context.absolute_url()+'/view')
+        self.request.response.redirect(self.context.absolute_url() + '/view')
 
 
 class RefreshView(BrowserView):
@@ -93,5 +105,13 @@ class RefreshView(BrowserView):
         return False
 
     def refresh(self):
-        refresh(self.context, None)
+        conversion_name = self.request.get('conversion', '')
+        pdf = self.request.get('pdf', None)
+        if conversion_name or pdf:
+            apply_specific_conversion(self.context,
+                                      conversion_name=conversion_name,
+                                      make_pdf=pdf)
+        else:
+            refresh_conversion(self.context)
+
         return self.request.response.redirect("%s/view" % self.context.absolute_url())

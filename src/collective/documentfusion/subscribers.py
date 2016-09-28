@@ -1,12 +1,6 @@
-from collective.documentfusion.interfaces import (
-    IDocumentFusion, IPDFGeneration, IMergeDocumentFusion)
-from collective.documentfusion.converter import convert_document, merge_document
+from collective.documentfusion.converter import refresh_conversion
 
 
 def refresh(obj, event=None):
-    if IMergeDocumentFusion.providedBy(obj):
-        return merge_document(obj)
-
-    target_extension = IPDFGeneration.providedBy(obj) and 'pdf' or None
-    make_fusion = IDocumentFusion.providedBy(obj)
-    convert_document(obj, make_fusion=make_fusion, target_extension=target_extension)
+    # TODO: get all conversions
+    refresh_conversion(obj)

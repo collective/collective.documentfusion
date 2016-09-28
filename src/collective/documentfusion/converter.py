@@ -1,4 +1,3 @@
-import traceback
 import os
 import tempfile
 import logging
@@ -22,7 +21,8 @@ from collective.documentfusion.interfaces import (
     ISOfficeSettings,
     IFusionData, IModelFileSource, IMergeDataSources,
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
-    DATA_STORAGE_KEY, STATUS_STORAGE_KEY)
+    DATA_STORAGE_KEY, STATUS_STORAGE_KEY, IMergeDocumentFusion, IPDFGeneration,
+    IDocumentFusion, IFusionDataReducer)
 
 logger = logging.getLogger('collective.documentfusion.converter')
 
@@ -52,7 +52,8 @@ def _get_blob_from_fs_file(file_path):
     return file_blob
 
 
-def __convert_document(obj, named_file, target_extension, fusion_data):
+def __convert_document(obj, named_file, target_extension, fusion_data,
+                       conversion_name=''):
     # section of convert_document process that should be run asyncronously
     converted_file = get_converted_file(
         named_file,
@@ -60,22 +61,24 @@ def __convert_document(obj, named_file, target_extension, fusion_data):
         fusion_data,
     )
     annotations = IAnnotations(obj)
-    previous_status = annotations[STATUS_STORAGE_KEY]
+    # todo delegate key computing
+    previous_status = annotations[STATUS_STORAGE_KEY + conversion_name]
     if converted_file is None:
         new_status = TASK_FAILED
-        annotations[DATA_STORAGE_KEY] = None
+        annotations[DATA_STORAGE_KEY + conversion_name] = None
     else:
         new_status = TASK_SUCCEEDED
-        annotations[DATA_STORAGE_KEY] = converted_file
+        annotations[DATA_STORAGE_KEY + conversion_name] = converted_file
 
-    annotations[STATUS_STORAGE_KEY] = new_status
+    annotations[STATUS_STORAGE_KEY + conversion_name] = new_status
     if new_status != previous_status:
         obj.setModificationDate(DateTime())
 
     # @TODO: refresh etag
 
 
-def convert_document(obj, target_extension=None, make_fusion=False):
+def convert_document(obj, target_extension=None, make_fusion=False,
+                     conversion_name=''):
     """We store in an annotation the conversion of the model file
        into the target extension
        eventually filled with data get from a source
@@ -83,16 +86,18 @@ def convert_document(obj, target_extension=None, make_fusion=False):
        sources
     """
     annotations = IAnnotations(obj)
-    annotations[DATA_STORAGE_KEY] = None
-    annotations[STATUS_STORAGE_KEY] = TASK_IN_PROGRESS
-    named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource)()
+    annotations[DATA_STORAGE_KEY + conversion_name] = None
+    annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_IN_PROGRESS
+    named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource,
+                                 name=conversion_name)()
     source_extension = filename_split(named_file.filename)[1]
 
     if not target_extension:
         target_extension = source_extension
 
     if make_fusion:
-        fusion_data = getMultiAdapter((obj, obj.REQUEST), IFusionData)()
+        fusion_data = getMultiAdapter((obj, obj.REQUEST), IFusionData,
+                                      name=conversion_name)()
     else:
         fusion_data = None
 
@@ -100,26 +105,27 @@ def convert_document(obj, target_extension=None, make_fusion=False):
         from plone.app.async.interfaces import IAsyncService
         async = getUtility(IAsyncService)
         async.queueJob(__convert_document, obj, named_file,
-                       target_extension, fusion_data)
+                       target_extension, fusion_data, conversion_name)
     except (ImportError, ComponentLookupError):
-        __convert_document(obj, named_file, target_extension, fusion_data)
+        __convert_document(obj, named_file, target_extension, fusion_data,
+                           conversion_name=conversion_name)
 
 
-def __merge_document(obj, named_file, fusion_data_list):
-    # section of merge_document process that should be run asyncronously
+def __merge_document(obj, named_file, fusion_data_list, conversion_name=''):
+    # section of merge_document process that should be run asynchronously
     annotations = IAnnotations(obj)
     merged_file = get_merged_file(named_file, fusion_data_list)
     if merged_file is None:
-        annotations[STATUS_STORAGE_KEY] = TASK_FAILED
-        annotations[DATA_STORAGE_KEY] = None
+        annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_FAILED
+        annotations[DATA_STORAGE_KEY + conversion_name] = None
     else:
-        annotations[STATUS_STORAGE_KEY] = TASK_SUCCEEDED
-        annotations[DATA_STORAGE_KEY] = merged_file
+        annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_SUCCEEDED
+        annotations[DATA_STORAGE_KEY + conversion_name] = merged_file
 
-    # @TODO: refresh etag
+        # @TODO: refresh etag
 
 
-def merge_document(obj):
+def merge_document(obj, conversion_name=''):
     """We store in an annotation a pdf file
        wich merges a fusion of model
        filled with data get from a source
@@ -127,22 +133,43 @@ def merge_document(obj):
        sources
     """
     annotations = IAnnotations(obj)
-    annotations[DATA_STORAGE_KEY] = None
-    annotations[STATUS_STORAGE_KEY] = TASK_IN_PROGRESS
-    named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource)()
+    annotations[DATA_STORAGE_KEY + conversion_name] = None
+    annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_IN_PROGRESS
 
+    # get source file
+    named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource,
+                                 name=conversion_name)()
+
+    # get contents from which we get data
     external_fusion_sources = getMultiAdapter((obj, obj.REQUEST),
-                                              IMergeDataSources)()
+                                              IMergeDataSources,
+                                              name=conversion_name)()
 
-    fusion_data_list = [getMultiAdapter((source, obj.REQUEST), IFusionData)()
-        for source in external_fusion_sources]
+    try:
+        # consolidate data if any reducer is provided (not by default)
+        reducer = getMultiAdapter((obj, obj.REQUEST),
+                                  IFusionDataReducer,
+                                  name=conversion_name)
+
+        fusion_data_list = reduce(
+            lambda c, v: (c[0] + 1, reducer(c[1], c[0], v)),
+            external_fusion_sources,
+            (0, []))[1]
+    except ComponentLookupError:
+        # if no reducer is provided, just get data from those contents in a list
+        fusion_data_list = (getMultiAdapter((source, obj.REQUEST), IFusionData,
+                                            name=conversion_name)()
+                            for source in external_fusion_sources)
+        pass
 
     try:
         from plone.app.async.interfaces import IAsyncService
         async = getUtility(IAsyncService)
-        async.queueJob(__merge_document, obj, named_file, fusion_data_list)
+        async.queueJob(__merge_document, obj, named_file, fusion_data_list,
+                       conversion_name=conversion_name)
     except (ImportError, ComponentLookupError):
-        __merge_document(obj, named_file, fusion_data_list)
+        __merge_document(obj, named_file, fusion_data_list,
+                         conversion_name=conversion_name)
 
 
 def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
@@ -181,11 +208,9 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
     assert os.path.exists(tmp_converted_file_path)
 
 
-def merge_pdfs(source_file_pathes,
-               merge_file_path):
+def merge_pdfs(source_file_pathes, merge_file_path):
     """Merge a list of source files into a new file using uno and libreoffice
     """
-
     merger = PdfFileMerger()
     for source_file_path in source_file_pathes:
         merger.append(PdfFileReader(open(source_file_path, 'rb')))
@@ -261,3 +286,32 @@ def get_merged_file(named_file, fusion_data_list):
         os.remove(fs_path)
 
     return merged_file_blob
+
+
+def refresh_conversion(obj):
+    """Update the conversion stored for the object
+    """
+    if IMergeDocumentFusion.providedBy(obj):
+        return merge_document(obj)
+
+    target_extension = IPDFGeneration.providedBy(obj) and 'pdf' or None
+    make_fusion = IDocumentFusion.providedBy(obj)
+    convert_document(obj,
+                     make_fusion=make_fusion,
+                     target_extension=target_extension)
+
+
+def apply_specific_conversion(obj, conversion_name, make_pdf=False):
+    """Update the named conversion stored for the object,
+    forcing pdf if you need so
+    """
+    try:
+        getMultiAdapter((obj, obj.REQUEST), IMergeDataSources,
+                        name=conversion_name)
+    except ComponentLookupError:
+        pass
+    else:
+        return merge_document(obj, conversion_name=conversion_name)
+
+    target_extension = make_pdf and 'pdf' or None
+    convert_document(obj, make_fusion=True, target_extension=target_extension)

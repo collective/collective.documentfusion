@@ -22,7 +22,7 @@ You have to get libreoffice installed on the system and run headless
     soffice --headless --accept="socket,host=127.0.0.1,port=2002;urp;" --nofirststartwizard
 
 
-In your buildout, add parts that installs py3o
+In your buildout, add parts that installs py3o: ::
 
     parts += py3o
 
@@ -33,7 +33,7 @@ In your buildout, add parts that installs py3o
         py3o.renderserver
 
 
-Then the services have to be started with accurate parameters, for instance:
+Then the services have to be started with accurate parameters, for instance: ::
 
     bin/start-py3o-fusion -s localhost -p 2003 -r 8888
     bin/start-py3o-renderserver -j /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/libjvm.so -d juno -u /usr/share -o /usr/share/libreoffice -l 8888 -p 2002
@@ -100,14 +100,33 @@ Extend
 ======
 
 The way to get data from a content is an adapter of context and request that provides interface
-collective.documentfusion.interfaces.IFusionData
+**collective.documentfusion.interfaces.IFusionData**
 
 The way to get the file field from a content is an adapter of context and request that provides interface
-collective.documentfusion.interfaces.ISourceFile
+**collective.documentfusion.interfaces.ISourceFile**
 
 The way to get a list of data contents is an adapter of context and request that provides interface
-collective.documentfusion.interfaces.IMergeDataSources
+**collective.documentfusion.interfaces.IMergeDataSources**
 
+If you need to consolidate data you get from sources during a merge fusion, you can write
+a **collective.documentfusion.interfaces.IFusionDataReducer** adapter
+where you will call IFusionData yourself and consolidate it with previous results.
+
+Manual conversion
+=================
+
+If you don't want / need to use the behaviours,
+(or if you want to add a conversion
+on a content type that already have an automatic conversion),
+you can create your own, you just have to implement a **named adapter** for
+**IFusionData**, **ISourceFile** and (not mandatory) **IMergeDataSources**.
+
+Then, you will be able to refresh the conversion using the view
+`/@@documentfusion-refresh?conversion=my_conversion_name`
+
+and to get it using the view `@@getdocumentfusion/?conversion=my_conversion_name`
+
+where my_conversion_name is the name you gave to the adapters.
 
 Async Integration
 =================

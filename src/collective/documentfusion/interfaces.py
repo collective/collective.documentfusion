@@ -21,15 +21,18 @@ class IGeneration(Interface):
     """
     """
 
+
 class IPDFGeneration(IGeneration):
     """When this behavior is selected, we generate a pdf version
     of the main file of the document.
     """
 
+
 class IDocumentFusion(IGeneration):
     """When this behavior is selected, we generate a fusion of the main file
     of the document with the fields of the dexterity content.
     """
+
 
 class IMergeDocumentFusion(IDocumentFusion):
     """We generate a pdf
@@ -37,25 +40,41 @@ class IMergeDocumentFusion(IDocumentFusion):
        filled with fields of each document related items
     """
 
+
 class IModelFileSource(Interface):
     """Adapter which provides the model file of a content for fusion.
     Adapts object and request.
     """
+
 
 class IFusionData(Interface):
     """Adapter which provides the fusion data of a content.
     Adapts object and request.
     """
 
+
 class IMergeDataSources(Interface):
     """Adapter which provides the source contents for the document merge
     from the main document.
     """
 
-class ISOfficeSettings(Interface):
 
+class IFusionDataReducer(Interface):
+    """Adapter which reduces fusionned data during a merge document fusion
+    """
+
+    def __call__(self, reduced, content_index, content):
+        """
+
+        @param reduced: list -> result of previous step
+        @param content_index: int -> index of content currently handled
+        @param content_data: dic -> data of current content
+        @return: list
+        """
+
+class ISOfficeSettings(Interface):
     port = ASCIILine(title=_(u"LibreOffice port"),
-                    description=_(u"The port used by LibreOffice service"))
+                     description=_(u"The port used by LibreOffice service"))
 
     host = Int(title=_(u"LibreOffice host"),
                description=_(u"The hostname from where LibreOffice is served"))
