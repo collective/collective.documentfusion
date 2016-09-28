@@ -147,7 +147,7 @@ def merge_document(obj):
 
 def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
                  fusion_data=None):
-    """Uses PyODConverted to convert a file into an other format
+    """Uses py3o to convert a file into an other format
     filling properties, bookmarks and fields with data
     using libreoffice service
     """
@@ -164,6 +164,7 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
         "datadict": json.dumps(fusion_data),
         "image_mapping": "{}",
     }
+
     req = requests.post(
         "http://%s:%s/form" % (settings.host, settings.port),
         data=fields,
