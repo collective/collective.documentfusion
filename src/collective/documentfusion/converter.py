@@ -176,7 +176,7 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
             for chunk in req.iter_content(chunk_size):
                 fd.write(chunk)
     else:
-        raise Exception("py3o.fusion server error")
+        raise Exception("py3o.fusion server error: %s", req.text)
 
     assert os.path.exists(tmp_converted_file_path)
 
@@ -210,8 +210,8 @@ def get_converted_file(named_file, target_ext, fusion_data):
             fusion_data
         )
         return _get_blob_from_fs_file(tmp_converted_file_path)
-    except ConnectionError:
-        logger.error("Connection to libreoffice unavailable")
+    except ConnectionError, e:
+        logger.error("Connection to libreoffice unavailable: %s", e)
         return None
     finally:
         try:
