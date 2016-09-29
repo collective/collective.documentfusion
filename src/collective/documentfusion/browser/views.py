@@ -70,30 +70,33 @@ class DownloadView(BrowserView):
     def __call__(self):
         conversion = self.request.get('conversion', '')
 
-        context = self.context
+        context, request = self.context, self.request
         # TODO: delegate storage
         annotations = IAnnotations(context)
         status = annotations.get(STATUS_STORAGE_KEY + conversion, None)
         named_file = annotations.get(DATA_STORAGE_KEY + conversion, None)
         if status == TASK_SUCCEEDED:
             set_headers(named_file,
-                        self.request.response, filename=named_file.filename)
+                        request.response, filename=named_file.filename)
             return stream_data(named_file)
 
         if status == TASK_IN_PROGRESS:
-            IStatusMessage(self.request).add(
+            IStatusMessage(request).add(
                 _(u"Document generation in progress, please retry later..."),
                 type='warning')
         elif status == TASK_FAILED:
-            IStatusMessage(self.request).add(
+            IStatusMessage(request).add(
                _(u"Document generation failed, please retry document generation"
                  u" or contact your administrator..."),
                type='error')
         elif not status or not named_file:
-            IStatusMessage(self.request).add(_(u"No document generated here"),
+            IStatusMessage(request).add(_(u"No document generated here"),
                                              type='error')
 
-        self.request.response.redirect(self.context.absolute_url() + '/view')
+        redirect_to = request.get('redirect_fail', '')
+        if not redirect_to:
+            redirect_to = "%s/view" % context.absolute_url()
+        return request.response.redirect(redirect_to)
 
 
 class RefreshView(BrowserView):
@@ -114,4 +117,7 @@ class RefreshView(BrowserView):
         else:
             refresh_conversion(self.context)
 
-        return self.request.response.redirect("%s/view" % self.context.absolute_url())
+        redirect_to = self.request.get('redirect_to', '')
+        if not redirect_to:
+            redirect_to = "%s/view" % self.context.absolute_url()
+        return self.request.response.redirect(redirect_to)
