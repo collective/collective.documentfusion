@@ -1,6 +1,5 @@
 from zope.i18n import translate
 from zope.i18nmessageid.message import MessageFactory
-from zope.annotation.interfaces import IAnnotations
 
 from plone.app.layout.viewlets.common import ViewletBase
 from plone.namedfile.utils import stream_data, set_headers
@@ -8,12 +7,12 @@ from Products.Five.browser import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.statusmessages.interfaces import IStatusMessage
 
-from collective.documentfusion.interfaces import DATA_STORAGE_KEY,\
-    STATUS_STORAGE_KEY, TASK_IN_PROGRESS, TASK_FAILED
-from collective.documentfusion.interfaces import TASK_SUCCEEDED
+from collective.documentfusion.interfaces import (
+    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED)
+from collective.documentfusion.interfaces import IFusionStorage
+from collective.documentfusion.converter import refresh_conversion, \
+    apply_specific_conversion
 from collective.documentfusion import _
-from collective.documentfusion.converter import refresh_conversion, apply_specific_conversion
-
 
 PMF = MessageFactory('plone')
 
@@ -26,12 +25,11 @@ PORTAL_MESSAGE = u"""
 
 
 class DownloadLinkViewlet(ViewletBase):
-
     def index(self):
         context = self.context
-        annotations = IAnnotations(context)
-        status = annotations.get(STATUS_STORAGE_KEY, None)
-        named_file = annotations.get(DATA_STORAGE_KEY, None)
+        storage = IFusionStorage(context)
+        status = storage.get_status()
+        named_file = storage.get_file()
         if status == TASK_IN_PROGRESS:
             return PORTAL_MESSAGE % {'statusid': 'info',
                                      'status': PMF(u"Info"),
@@ -66,15 +64,13 @@ class DownloadLinkViewlet(ViewletBase):
 
 
 class DownloadView(BrowserView):
-
     def __call__(self):
-        conversion = self.request.get('conversion', '')
-
+        conversion_name = self.request.get('conversion', '')
         context, request = self.context, self.request
         # TODO: delegate storage
-        annotations = IAnnotations(context)
-        status = annotations.get(STATUS_STORAGE_KEY + conversion, None)
-        named_file = annotations.get(DATA_STORAGE_KEY + conversion, None)
+        storage = IFusionStorage(context)
+        status = storage.get_status(conversion_name)
+        named_file = storage.get_file(conversion_name)
         if status == TASK_SUCCEEDED:
             set_headers(named_file,
                         request.response, filename=named_file.filename)
@@ -86,12 +82,13 @@ class DownloadView(BrowserView):
                 type='warning')
         elif status == TASK_FAILED:
             IStatusMessage(request).add(
-               _(u"Document generation failed, please retry document generation"
-                 u" or contact your administrator..."),
-               type='error')
+                _(
+                    u"Document generation failed, please retry document generation"
+                    u" or contact your administrator..."),
+                type='error')
         elif not status or not named_file:
             IStatusMessage(request).add(_(u"No document generated here"),
-                                             type='error')
+                                        type='error')
 
         redirect_to = request.get('redirect_fail', '')
         if not redirect_to:
@@ -100,7 +97,6 @@ class DownloadView(BrowserView):
 
 
 class RefreshView(BrowserView):
-
     def enabled(self):
         return True
 
@@ -118,6 +114,10 @@ class RefreshView(BrowserView):
             refresh_conversion(self.context)
 
         redirect_to = self.request.get('redirect_to', '')
+        ajax_load = self.request.get('ajax_load', '')
+        if ajax_load:
+            return ''
+
         if not redirect_to:
             redirect_to = "%s/view" % self.context.absolute_url()
         return self.request.response.redirect(redirect_to)

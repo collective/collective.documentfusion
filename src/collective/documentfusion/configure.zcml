@@ -22,6 +22,10 @@
     <include zcml:condition="installed plone.app.dexterity"
              file="dexterity.zcml" />
 
+    <adapter
+        factory=".storage.FusionStorage"
+        provides="collective.documentfusion.interfaces.IFusionStorage" />
+
     <genericsetup:registerProfile
         name="default"
         title="collective.documentfusion"

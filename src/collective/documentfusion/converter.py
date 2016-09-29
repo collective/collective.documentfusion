@@ -3,6 +3,7 @@ import tempfile
 import logging
 
 import requests
+from collective.documentfusion.exceptions import Py3oException
 from requests.exceptions import ConnectionError
 import json
 from PyPDF2 import PdfFileMerger, PdfFileReader
@@ -11,17 +12,16 @@ from DateTime import DateTime
 
 from zope.component import getUtility, getMultiAdapter
 from zope.component.interfaces import ComponentLookupError
-from zope.annotation.interfaces import IAnnotations
 
 from plone.registry.interfaces import IRegistry
 from plone.namedfile.file import NamedBlobFile
 from plone.app.blob.utils import guessMimetype
 
 from collective.documentfusion.interfaces import (
-    ISOfficeSettings,
+    ISOfficeSettings, IFusionStorage,
     IFusionData, IModelFileSource, IMergeDataSources,
-    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED,
-    DATA_STORAGE_KEY, STATUS_STORAGE_KEY, IMergeDocumentFusion, IPDFGeneration,
+    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED, IMergeDocumentFusion,
+    IPDFGeneration,
     IDocumentFusion, IFusionDataReducer)
 
 logger = logging.getLogger('collective.documentfusion.converter')
@@ -29,6 +29,11 @@ logger = logging.getLogger('collective.documentfusion.converter')
 
 def filename_split(filename):
     return filename.rsplit('.', 1)
+
+
+def remove_if_exists(filepath):
+    if os.path.exists(filepath):
+        os.remove(filepath)
 
 
 def _store_namedfile_in_fs_temp(named_file):
@@ -55,26 +60,31 @@ def _get_blob_from_fs_file(file_path):
 def __convert_document(obj, named_file, target_extension, fusion_data,
                        conversion_name=''):
     # section of convert_document process that should be run asyncronously
-    converted_file = get_converted_file(
-        named_file,
-        target_extension,
-        fusion_data,
-    )
-    annotations = IAnnotations(obj)
-    # todo delegate key computing
-    previous_status = annotations[STATUS_STORAGE_KEY + conversion_name]
-    if converted_file is None:
-        new_status = TASK_FAILED
-        annotations[DATA_STORAGE_KEY + conversion_name] = None
+    storage = IFusionStorage(obj)
+    try:
+        converted_file = get_converted_file(
+            named_file,
+            target_extension,
+            fusion_data,
+        )
+    except Exception, e:
+        storage.set_status(TASK_FAILED, conversion_name)
+        storage.set_file(None, conversion_name)
+        logger.exception(str(e))
     else:
-        new_status = TASK_SUCCEEDED
-        annotations[DATA_STORAGE_KEY + conversion_name] = converted_file
+        previous_status = storage.get_status(conversion_name)
+        if converted_file is None:
+            new_status = TASK_FAILED
+            storage.set_file(None, conversion_name)
+        else:
+            new_status = TASK_SUCCEEDED
+            storage.set_file(converted_file, conversion_name)
 
-    annotations[STATUS_STORAGE_KEY + conversion_name] = new_status
-    if new_status != previous_status:
-        obj.setModificationDate(DateTime())
+        storage.set_status(new_status, conversion_name)
+        if new_status != previous_status:
+            obj.setModificationDate(DateTime())
 
-    # @TODO: refresh etag
+            # @TODO: refresh etag
 
 
 def convert_document(obj, target_extension=None, make_fusion=False,
@@ -85,9 +95,10 @@ def convert_document(obj, target_extension=None, make_fusion=False,
        if we have many sources, we get a merge of this document filled with all
        sources
     """
-    annotations = IAnnotations(obj)
-    annotations[DATA_STORAGE_KEY + conversion_name] = None
-    annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_IN_PROGRESS
+    storage = IFusionStorage(obj)
+    storage.set_file(None, conversion_name)
+    storage.set_status(TASK_IN_PROGRESS, conversion_name)
+
     named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource,
                                  name=conversion_name)()
     source_extension = filename_split(named_file.filename)[1]
@@ -113,14 +124,20 @@ def convert_document(obj, target_extension=None, make_fusion=False,
 
 def __merge_document(obj, named_file, fusion_data_list, conversion_name=''):
     # section of merge_document process that should be run asynchronously
-    annotations = IAnnotations(obj)
-    merged_file = get_merged_file(named_file, fusion_data_list)
-    if merged_file is None:
-        annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_FAILED
-        annotations[DATA_STORAGE_KEY + conversion_name] = None
+    storage = IFusionStorage(obj)
+    try:
+        merged_file = get_merged_file(named_file, fusion_data_list)
+    except Exception, e:
+        storage.set_status(TASK_FAILED, conversion_name)
+        storage.set_file(None, conversion_name)
+        logger.exception(str(e))
     else:
-        annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_SUCCEEDED
-        annotations[DATA_STORAGE_KEY + conversion_name] = merged_file
+        if merged_file is None:
+            storage.set_status(TASK_FAILED, conversion_name)
+            storage.set_file(None, conversion_name)
+        else:
+            storage.set_status(TASK_SUCCEEDED, conversion_name)
+            storage.set_file(merged_file, conversion_name)
 
         # @TODO: refresh etag
 
@@ -132,9 +149,9 @@ def merge_document(obj, conversion_name=''):
        if we have many sources, we get a merge of this document filled with all
        sources
     """
-    annotations = IAnnotations(obj)
-    annotations[DATA_STORAGE_KEY + conversion_name] = None
-    annotations[STATUS_STORAGE_KEY + conversion_name] = TASK_IN_PROGRESS
+    storage = IFusionStorage(obj)
+    storage.set_file(None, conversion_name)
+    storage.set_status(TASK_IN_PROGRESS, conversion_name)
 
     # get source file
     named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource,
@@ -203,7 +220,7 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
             for chunk in req.iter_content(chunk_size):
                 fd.write(chunk)
     else:
-        raise Exception("py3o.fusion server error: %s", req.text)
+        raise Py3oException("py3o.fusion server error: %s", req.text)
 
     assert os.path.exists(tmp_converted_file_path)
 
@@ -235,19 +252,9 @@ def get_converted_file(named_file, target_ext, fusion_data):
             fusion_data
         )
         return _get_blob_from_fs_file(tmp_converted_file_path)
-    except ConnectionError, e:
-        logger.error("Connection to libreoffice unavailable: %s", e)
-        return None
     finally:
-        try:
-            os.remove(tmp_source_file_path)
-        except OSError:
-            pass
-
-        try:
-            os.remove(tmp_converted_file_path)
-        except OSError:
-            pass
+        remove_if_exists(tmp_source_file_path)
+        remove_if_exists(tmp_converted_file_path)
 
 
 def get_merged_file(named_file, fusion_data_list):
@@ -258,34 +265,39 @@ def get_merged_file(named_file, fusion_data_list):
     tmp_source_file_path = _store_namedfile_in_fs_temp(named_file)
     converted_subfile_pathes = []
     base_filename = filename_split(named_file.filename)[0]
-    # create a fusion from each data source
-    for num, fusion_data in enumerate(fusion_data_list):
-        suffix = '--%s-%s.pdf' % (num, base_filename)
-        tmp_converted_subfile_path = tempfile.mktemp(suffix=suffix)
-        convert_file(
-            tmp_source_file_path,
-            tmp_converted_subfile_path,
-            'pdf',
-            fusion_data
-        )
-        converted_subfile_pathes.append(tmp_converted_subfile_path)
-
-    # merge all fusion files
     suffix = '--%s.pdf' % (base_filename,)
     tmp_merged_file_path = tempfile.mktemp(suffix=suffix)
-    # @TODO: cropping ?
-    merge_pdfs(converted_subfile_pathes, tmp_merged_file_path)
+    try:
+        # create a fusion from each data source
+        for num, fusion_data in enumerate(fusion_data_list):
+            suffix = '--%s-%s.pdf' % (num, base_filename)
+            tmp_converted_subfile_path = tempfile.mktemp(suffix=suffix)
+            try:
+                convert_file(
+                    tmp_source_file_path,
+                    tmp_converted_subfile_path,
+                    'pdf',
+                    fusion_data
+                )
+            except:
+                remove_if_exists(tmp_converted_subfile_path)
+                raise
 
-    # get blob
-    merged_file_blob = _get_blob_from_fs_file(tmp_merged_file_path)
+            converted_subfile_pathes.append(tmp_converted_subfile_path)
 
-    # cleanup
-    os.remove(tmp_source_file_path)
-    os.remove(tmp_merged_file_path)
-    for fs_path in converted_subfile_pathes:
-        os.remove(fs_path)
+        # merge all fusion files
+        # @TODO: cropping ?
+        merge_pdfs(converted_subfile_pathes, tmp_merged_file_path)
 
-    return merged_file_blob
+        # get blob
+        merged_file_blob = _get_blob_from_fs_file(tmp_merged_file_path)
+        return merged_file_blob
+    finally:
+        # cleanup
+        remove_if_exists(tmp_source_file_path)
+        remove_if_exists(tmp_merged_file_path)
+        for fs_path in converted_subfile_pathes:
+            remove_if_exists(fs_path)
 
 
 def refresh_conversion(obj):
@@ -314,4 +326,5 @@ def apply_specific_conversion(obj, conversion_name, make_pdf=False):
         return merge_document(obj, conversion_name=conversion_name)
 
     target_extension = make_pdf and 'pdf' or None
-    convert_document(obj, make_fusion=True, target_extension=target_extension)
+    convert_document(obj, conversion_name=conversion_name, make_fusion=True,
+                     target_extension=target_extension)

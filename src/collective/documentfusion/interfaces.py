@@ -72,6 +72,28 @@ class IFusionDataReducer(Interface):
         @return: list
         """
 
+
+class IFusionStorage(Interface):
+    """Adapter to ease access to stored information
+    """
+
+    def get_status(self, conversion_name=''):
+        """Get conversion status: success, failure or pending.
+        """
+
+    def set_status(self, conversion_name=''):
+        """Set conversion status.
+        """
+
+    def get_file(self, conversion_name=''):
+        """Get converted file.
+        """
+
+    def set_file(self, named_file, conversion_name=''):
+        """Set converted file.
+        """
+
+
 class ISOfficeSettings(Interface):
     port = ASCIILine(title=_(u"LibreOffice port"),
                      description=_(u"The port used by LibreOffice service"))
