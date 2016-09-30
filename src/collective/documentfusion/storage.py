@@ -18,9 +18,11 @@ class FusionStorage(object):
         """Get conversion status: success, failure or pending.
         """
         if conversion_name:
-            return self.annotations[STATUS_STORAGE_KEY + '-' + conversion_name]
+            key = STATUS_STORAGE_KEY + '-' + conversion_name
         else:
-            return self.annotations[STATUS_STORAGE_KEY]
+            key = STATUS_STORAGE_KEY
+
+        return self.annotations.get(key, None)
 
     def set_status(self, status, conversion_name=''):
         """Get conversion status: success, failure or pending.
@@ -35,9 +37,11 @@ class FusionStorage(object):
         """Get converted file.
         """
         if conversion_name:
-            return self.annotations[DATA_STORAGE_KEY + '-' + conversion_name]
+            key = DATA_STORAGE_KEY + '-' + conversion_name
         else:
-            return self.annotations[DATA_STORAGE_KEY]
+            key = DATA_STORAGE_KEY
+
+        return self.annotations.get(key, None)
 
     def set_file(self, named_file, conversion_name=''):
         """Set converted file.
