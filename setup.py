@@ -20,7 +20,7 @@ long_description = (
 setup(
     name='collective.documentfusion',
     version='0.1',
-    description="Makes a fusion of the variables and of a file field with the other fields of a dexterity content.",
+    description="Makes a fusion of the variables of a file with values from plone content.",
     long_description=long_description,
     # Get more from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[

@@ -10,7 +10,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 from collective.documentfusion.interfaces import (
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED)
 from collective.documentfusion.interfaces import IFusionStorage
-from collective.documentfusion.converter import refresh_conversion, \
+from collective.documentfusion.api import refresh_conversion, \
     apply_specific_conversion
 from collective.documentfusion import _
 

@@ -1,4 +1,4 @@
-from collective.documentfusion.converter import refresh_conversion
+from collective.documentfusion.api import refresh_conversion
 
 
 def refresh(obj, event=None):

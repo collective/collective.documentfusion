@@ -1,8 +1,8 @@
-from zope.interface import implements
-from zope.annotation.interfaces import IAnnotations, IAnnotatable
-from zope.component import adapts
 from collective.documentfusion.interfaces import (
     IFusionStorage, STATUS_STORAGE_KEY, DATA_STORAGE_KEY)
+from zope.annotation.interfaces import IAnnotations, IAnnotatable
+from zope.component import adapts
+from zope.interface import implements
 
 
 class FusionStorage(object):
