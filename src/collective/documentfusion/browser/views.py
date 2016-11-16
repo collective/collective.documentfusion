@@ -17,11 +17,13 @@ from collective.documentfusion import _
 PMF = MessageFactory('plone')
 
 PORTAL_MESSAGE = u"""
-            <dl class="portalMessage %(statusid)s">
-                        <dt>%(status)s</dt>
-                        <dd>%(msg)s</dd>
-            </dl>
-            """
+<div class="viewlet-documentfusion-downloadlink">
+  <dl class="portalMessage %(statusid)s">
+            <dt>%(status)s</dt>
+            <dd>%(msg)s</dd>
+  </dl>
+</div>
+"""
 
 
 class DownloadLinkViewlet(ViewletBase):
@@ -56,7 +58,7 @@ class DownloadLinkViewlet(ViewletBase):
         mimetype = mtregistry.lookupExtension(file_name)
         icon_path = "%s/%s" % (self.portal_url, mimetype.icon_path)
         return u"""
-        <div id="generated-pdf">
+        <div class="viewlet-documentfusion-downloadlink viewlet-documentfusion-generated">
           <a href="%s" title="%s">
             <img src="%s" /> %s
           </a>
