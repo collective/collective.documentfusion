@@ -39,7 +39,19 @@ Then the services have to be started with accurate parameters, for instance: ::
     bin/start-py3o-renderserver -j /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/libjvm.so -d juno -u /usr/share -o /usr/share/libreoffice -l 8888 -p 2002
 
 
-Read the documentation
+Read the documentation of those services.
+
+
+How to setup collective.documentfusion
+======================================
+
+Install the product on your plone site.
+
+There are three Plone registry fields: ::
+
+    - `auto_refresh_enabled` to allow / disallow automatic regeneration of conversion at each modification on documents (default True),
+    - `fusion_service_port` to tell Plone the port of the py3o.fusion service,
+    - `fusion_service_host` to tell the host where it is served.
 
 
 How to use collective.documentfusion

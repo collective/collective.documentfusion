@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module where all interfaces, events and exceptions live."""
-from zope.schema import ASCIILine, Int
+from zope.schema import ASCIILine, Bool, Int
 from zope.component import Interface
 from zope.publisher.interfaces.browser import IDefaultBrowserLayer
 from collective.documentfusion import _
@@ -94,9 +94,15 @@ class IFusionStorage(Interface):
         """
 
 
-class ISOfficeSettings(Interface):
-    port = ASCIILine(title=_(u"LibreOffice port"),
-                     description=_(u"The port used by LibreOffice service"))
+class ISettings(Interface):
+    fusion_service_port = Int(
+        title=_(u"Fusion service port"),
+        description=_(u"The port used by py3o.fusion service"))
 
-    host = Int(title=_(u"LibreOffice host"),
-               description=_(u"The hostname from where LibreOffice is served"))
+    fusion_service_host = ASCIILine(
+        title=_(u"Fusion service host"),
+        description=_(u"The hostname from where py3o.fusion is served"))
+
+    auto_refresh_enabled = Bool(
+        title=_(u"Automatic refresh enabled"),
+        description=_(u"Automatic refresh of generated files is enabled"))
