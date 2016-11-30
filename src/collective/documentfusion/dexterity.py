@@ -1,23 +1,19 @@
 import datetime
-from zope.interface import implements, Interface
-from zope.component import getUtility, adapts, getMultiAdapter
-from zope.component.interfaces import ComponentLookupError
-from zope.schema import getFieldsInOrder
-from zope.schema import getFields
 
 from Products.CMFPlone.utils import base_hasattr
-from plone import api
-from plone.app.relationfield.behavior import IRelatedItems
-from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
-from plone.namedfile.interfaces import INamedField
-
-from zope.component._api import queryMultiAdapter
-from plone.behavior.interfaces import IBehavior
-from plone.autoform.interfaces import IFormFieldProvider
-
+from collective.documentfusion.dexterityfields import IExportable
 from collective.documentfusion.interfaces import IModelFileSource, IFusionData, \
     IMergeDataSources
-from collective.documentfusion.dexterityfields import IExportable
+from plone import api
+from plone.app.relationfield.behavior import IRelatedItems
+from plone.autoform.interfaces import IFormFieldProvider
+from plone.behavior.interfaces import IBehavior
+from plone.dexterity.interfaces import IDexterityFTI, IDexterityContent
+from plone.namedfile.interfaces import INamedField
+from zope.component import getUtility, adapts, getMultiAdapter, queryMultiAdapter
+from zope.component.interfaces import ComponentLookupError
+from zope.interface import implements, Interface
+from zope.schema import getFields, getFieldsInOrder
 
 
 def get_fields(fti):
@@ -41,7 +37,6 @@ class DexterityFusionData(object):
         self.request = request
 
     def __call__(self):
-
         context = self.context
         data = {}
         data['document_id'] = context.id
@@ -74,11 +69,11 @@ class DexterityFusionData(object):
         for name in fields:
             try:
                 renderer = getMultiAdapter((fields[name], self.context, self.request),
-                                     interface=IExportable,
-                                     name=name)
+                                           interface=IExportable,
+                                           name=name)
             except ComponentLookupError:
                 renderer = getMultiAdapter((fields[name], self.context, self.request),
-                                     interface=IExportable)
+                                           interface=IExportable)
 
             render = renderer.render(self.context)
             if type(render) is datetime.date:
@@ -86,7 +81,6 @@ class DexterityFusionData(object):
             data[name] = render
 
         return data
-
 
 
 class DexteritySourceFile(object):
@@ -128,6 +122,7 @@ class RelatedItemsMergeDataSources(object):
 
     def __init__(self, context, request):
         self.context = context
+        self.request = request
 
     def get_cascading_data_sources(self, obj):
         adapter = queryMultiAdapter((obj, self.context.REQUEST),

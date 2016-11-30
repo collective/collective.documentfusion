@@ -1,21 +1,21 @@
 # -*- encoding: utf-8 -*-
-from zope.interface import Interface
-from zope.schema.interfaces import IField, IDate, ICollection,\
-    IVocabularyFactory, IBool
-from zope.component import adapts
-from zope.component import getMultiAdapter
-from zope.component._api import getUtility
-from zope.i18n import translate
-from zope.interface.declarations import implements
-from zope.schema import getFieldsInOrder
-
-from z3c.form.interfaces import NO_VALUE
 
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import base_hasattr
 from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.interfaces import INamedField
 from plone.schemaeditor.schema import IChoice
+from z3c.form.interfaces import NO_VALUE
+from zope.component import adapts
+from zope.component import getMultiAdapter
+from zope.component import getUtility
+from zope.i18n import translate
+from zope.interface import Interface
+from zope.interface.declarations import implements
+from zope.schema import getFieldsInOrder
+from zope.schema.interfaces import IField, IDate, ICollection, \
+    IVocabularyFactory, IBool
 
 
 class IExportable(Interface):
@@ -26,6 +26,7 @@ class IExportable(Interface):
         """Gets the value to render in document from content
         """
 
+
 class IFieldValueGetter(Interface):
     """Adapter to get a value from fieldname
     """
@@ -33,6 +34,7 @@ class IFieldValueGetter(Interface):
     def get(self, fieldname):
         """Get value from fieldname
         """
+
 
 class DexterityValueGetter(object):
     adapts(IDexterityContent)
@@ -98,8 +100,11 @@ class BooleanFieldRenderer(BaseFieldRenderer):
 class DateFieldRenderer(BaseFieldRenderer):
     adapts(IDate, Interface, Interface)
 
+    def render(self, obj):
+        return self.render_collection_entry(obj, self.get_value(obj))
+
     def render_collection_entry(self, obj, value):
-        return value.strftime("%Y/%m/%d")
+        return value and value.strftime('%Y/%m/%d') or ""
 
 
 class ChoiceFieldRenderer(BaseFieldRenderer):
@@ -111,9 +116,9 @@ class ChoiceFieldRenderer(BaseFieldRenderer):
 
         vocabulary = self.field.vocabulary
         if not vocabulary:
-            vocabularyName = self.field.vocabularyName
-            if vocabularyName:
-                vocabulary = getUtility(IVocabularyFactory, name=vocabularyName)(obj)
+            vocabulary_name = self.field.vocabularyName
+            if vocabulary_name:
+                vocabulary = getUtility(IVocabularyFactory, name=vocabulary_name)(obj)
 
         if vocabulary:
             try:
@@ -151,7 +156,7 @@ class CollectionFieldRenderer(BaseFieldRenderer):
         value = self.get_value(obj)
         sub_renderer = getMultiAdapter((self.field.value_type,
                                         self.context, self.request),
-                                        interface=IExportable)
+                                       interface=IExportable)
         return value and u"\n".join(["- " + sub_renderer.render_collection_entry(obj, v)
                                      for v in value]) or u""
 
@@ -174,7 +179,10 @@ class RichTextFieldRenderer(BaseFieldRenderer):
 
 try:
     from z3c.relationfield.interfaces import IRelation
+
     HAS_RELATIONFIELD = True
+
+
     class RelationFieldRenderer(BaseFieldRenderer):
         adapts(IRelation, Interface, Interface)
 
@@ -183,15 +191,17 @@ try:
             return self.render_collection_entry(obj, value)
 
         def render_collection_entry(self, obj, value):
-            return value and value.to_object and value.to_object.Title() or u""
+            return base_hasattr(value, 'to_object') and value.to_object and value.to_object.Title() or u""
 
-except:
+except ImportError:
     HAS_RELATIONFIELD = False
-
 
 try:
     from collective.z3cform.datagridfield.interfaces import IRow
+
     HAS_DATAGRIDFIELD = True
+
+
     class DictRowFieldRenderer(BaseFieldRenderer):
         adapts(IRow, Interface, Interface)
 
@@ -201,11 +211,11 @@ try:
             for fieldname, field in fields:
                 sub_renderer = getMultiAdapter((field,
                                                 self.context, self.request),
-                                                interface=IExportable)
+                                               interface=IExportable)
                 field_renderings.append(u"%s : %s" % (
-                                        sub_renderer.render_header(),
-                                        sub_renderer.render_collection_entry(obj,
-                                                value.get(fieldname))))
+                    sub_renderer.render_header(),
+                    sub_renderer.render_collection_entry(obj,
+                                                         value.get(fieldname))))
 
             return u" / ".join([r for r in field_renderings])
 
@@ -213,13 +223,15 @@ try:
             value = self.get_value(obj)
             return self.render_collection_entry(obj, value)
 
-except:
+except ImportError:
     HAS_DATAGRIDFIELD = False
-
 
 try:
     from collective.contact.widget.interfaces import IContactChoice
+
     HAS_CONTACT_CORE = True
+
+
     class ContactChoiceFieldRenderer(BaseFieldRenderer):
         adapts(IContactChoice, Interface, Interface)
 
@@ -230,5 +242,5 @@ try:
         def render_collection_entry(self, obj, value):
             return value and value.to_object and value.to_object.get_full_title() or u""
 
-except:
+except ImportError:
     HAS_CONTACT_CORE = False
