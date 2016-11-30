@@ -1,8 +1,19 @@
 import os
 import tempfile
 
+from collective.documentfusion import logger
+from .interfaces import ISettings
 from plone.app.blob.utils import guessMimetype
 from plone.namedfile.file import NamedBlobFile
+from plone.registry.interfaces import IRegistry
+from zope.component import getUtility
+from zope.component.interfaces import ComponentLookupError
+
+try:
+    from plone.app.async.interfaces import IAsyncService
+    async_available = True
+except ImportError:
+    async_available = False
 
 
 def filename_split(filename):
@@ -33,3 +44,29 @@ def get_blob_from_fs_file(file_path):
                               contentType=file_mimetype,
                               filename=unicode(file_name))
     return file_blob
+
+
+def execute_job(function, *args, **kwargs):
+    """Execute job async
+    @param function: function to execute
+    args and kwargs:
+    @param documentfusion_prevent_async: bool: if true, prevent async execution
+    """
+    if not async_available:
+        prevent_async = True
+    elif kwargs.pop('documentfusion_prevent_async', False):
+        prevent_async = True
+    else:
+        settings = getUtility(IRegistry).forInterface(ISettings)
+        prevent_async = settings.disable_async
+
+    if not prevent_async:
+        try:
+            async = getUtility(IAsyncService)
+            async.queueJob(function, *args, **kwargs)
+            logger.info("Job queued: %s, %s, %s", function, args, kwargs)
+            return
+        except (ImportError, ComponentLookupError):
+            pass
+
+    function(*args, **kwargs)

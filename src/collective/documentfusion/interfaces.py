@@ -97,12 +97,20 @@ class IFusionStorage(Interface):
 class ISettings(Interface):
     fusion_service_port = Int(
         title=_(u"Fusion service port"),
-        description=_(u"The port used by py3o.fusion service"))
+        description=_(u"The port used by py3o.fusion service"),
+    )
 
     fusion_service_host = ASCIILine(
         title=_(u"Fusion service host"),
-        description=_(u"The hostname from where py3o.fusion is served"))
+        description=_(u"The hostname from where py3o.fusion is served"),
+    )
 
     auto_refresh_enabled = Bool(
         title=_(u"Automatic refresh enabled"),
-        description=_(u"Automatic refresh of generated files is enabled"))
+        description=_(u"Automatic refresh of generated files is enabled"),
+    )
+
+    disable_async = Bool(
+        title=_(u"Prevent using async document generation"),
+        description=_(u"For development or test mode"),
+    )

@@ -33,4 +33,15 @@
     </field>
     <value>True</value>
   </record>
+  <record name="collective.documentfusion.interfaces.ISettings.disable_async"
+          interface="collective.documentfusion.interfaces.ISettings"
+          field="disable_async">
+    <field type="plone.registry.field.Bool">
+      <default>False</default>
+      <description>For development or test mode</description>
+      <required>True</required>
+      <title>Prevent using async document generation</title>
+    </field>
+    <value>False</value>
+  </record>
 </registry>

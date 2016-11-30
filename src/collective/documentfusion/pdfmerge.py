@@ -7,9 +7,15 @@ from collective.documentfusion.interfaces import (
     IFusionStorage,
     IFusionData, IModelFileSource, IMergeDataSources,
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED, IFusionDataReducer)
-from collective.documentfusion.utils import (remove_if_exists, get_blob_from_fs_file, store_namedfile_in_fs_temp, filename_split)
-from zope.component import getUtility, getMultiAdapter
+from zope.component import getMultiAdapter
 from zope.component.interfaces import ComponentLookupError
+from .utils import (
+    execute_job,
+    filename_split,
+    get_blob_from_fs_file,
+    remove_if_exists,
+    store_namedfile_in_fs_temp,
+)
 
 logger = logging.getLogger('collective.documentfusion.pdfmerge')
 
@@ -71,14 +77,9 @@ def merge_document(obj, conversion_name=''):
                             for source in external_fusion_sources)
         pass
 
-    try:
-        from plone.app.async.interfaces import IAsyncService
-        async = getUtility(IAsyncService)
-        async.queueJob(__merge_document, obj, named_file, fusion_data_list,
-                       conversion_name=conversion_name)
-    except (ImportError, ComponentLookupError):
-        __merge_document(obj, named_file, fusion_data_list,
-                         conversion_name=conversion_name)
+    execute_job(__merge_document,
+                obj, named_file, fusion_data_list,
+                conversion_name=conversion_name)
 
 
 def merge_pdfs(source_file_pathes, merge_file_path):

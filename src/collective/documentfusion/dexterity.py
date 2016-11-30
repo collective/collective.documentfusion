@@ -15,10 +15,9 @@ from zope.component._api import queryMultiAdapter
 from plone.behavior.interfaces import IBehavior
 from plone.autoform.interfaces import IFormFieldProvider
 
-from collective.documentfusion.interfaces import IModelFileSource, IFusionData,\
+from collective.documentfusion.interfaces import IModelFileSource, IFusionData, \
     IMergeDataSources
 from collective.documentfusion.dexterityfields import IExportable
-
 
 
 def get_fields(fti):

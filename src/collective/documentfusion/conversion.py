@@ -11,8 +11,14 @@ from collective.documentfusion.interfaces import (
     IFusionData, IModelFileSource, TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED)
 from plone.registry.interfaces import IRegistry
 from zope.component import getUtility, getMultiAdapter
-from zope.component.interfaces import ComponentLookupError
-from .utils import filename_split, store_namedfile_in_fs_temp, remove_if_exists, get_blob_from_fs_file
+from .utils import (
+    execute_job,
+    filename_split,
+    get_blob_from_fs_file,
+    store_namedfile_in_fs_temp,
+    remove_if_exists,
+)
+
 
 logger = logging.getLogger('collective.documentfusion.conversion')
 
@@ -72,14 +78,10 @@ def convert_document(obj, target_extension=None, make_fusion=False,
     else:
         fusion_data = None
 
-    try:
-        from plone.app.async.interfaces import IAsyncService
-        async = getUtility(IAsyncService)
-        async.queueJob(__convert_document, obj, named_file,
-                       target_extension, fusion_data, conversion_name)
-    except (ImportError, ComponentLookupError):
-        __convert_document(obj, named_file, target_extension, fusion_data,
-                           conversion_name=conversion_name)
+    execute_job(__convert_document,
+                obj, named_file, target_extension, fusion_data,
+                conversion_name=conversion_name
+                )
 
 
 def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,

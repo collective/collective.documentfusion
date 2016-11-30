@@ -49,9 +49,10 @@ Install the product on your plone site.
 
 There are three Plone registry fields: ::
 
-    - `auto_refresh_enabled` to allow / disallow automatic regeneration of conversion at each modification on documents (default True),
-    - `fusion_service_port` to tell Plone the port of the py3o.fusion service,
-    - `fusion_service_host` to tell the host where it is served.
+    - `auto_refresh_enabled` to allow / disallow automatic regeneration of conversion at each modification on documents (default `True`),
+    - `fusion_service_port` to tell Plone the port of the py3o.fusion service (default `8765`),
+    - `fusion_service_host` to tell the host where it is served (default `localhost`),
+    - `disable_async` to force conversion not to use async (default `False`).
 
 
 How to use collective.documentfusion
@@ -75,7 +76,7 @@ Simple content type with model file and data
 
 You can create a content type with a file field and the data field.
 You just have to activate "collective.documentfusion: Document fusion" behavior
-on the type. Each time you edit the content, a merged version of the content
+on the type. Each time you edit the content, a fused version of the content
 will be generated each time you edit the document or you click 'refresh' action.
 
 If you also select "collective.documentfusion: PDF Generation" behavior,
