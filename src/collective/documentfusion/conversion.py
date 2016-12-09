@@ -107,7 +107,8 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
     req = requests.post(
         "http://%s:%s/form" % (settings.fusion_service_host, settings.fusion_service_port),
         data=fields,
-        files=files
+        files=files,
+        timeout=10.0,
     )
     if req.status_code != 400:
         chunk_size = 1024
