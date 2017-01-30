@@ -116,6 +116,7 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
             for chunk in req.iter_content(chunk_size):
                 fd.write(chunk)
     else:
+        logger.error("Failed to convert file: %s with data: %s", files, fields)
         raise Py3oException("py3o.fusion server error: %s", req.text)
 
     assert os.path.exists(tmp_converted_file_path)
