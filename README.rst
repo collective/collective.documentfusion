@@ -42,6 +42,27 @@ Then the services have to be started with accurate parameters, for instance: ::
 Read the documentation of those services.
 
 
+You can also use docker images. This is quite easier since you have docker infrastructure.
+Your docker-compose will look like this (don't forget to set the image tags):
+
+    py3ofusion:
+        image: xcgd/py3o.fusion
+        ports:
+            - "127.0.0.1:8765:8765"
+        links:
+            - "py3orenderserver"
+
+    py3orenderserver:
+        image: xcgd/py3oserver-docker
+        links:
+            - "oooserver"
+        volumes_from:
+            - "oooserver"
+
+    oooserver:
+        image: xcgd/libreoffice
+
+
 How to setup collective.documentfusion
 ======================================
 
@@ -52,6 +73,7 @@ There are three Plone registry fields: ::
     - `auto_refresh_enabled` to allow / disallow automatic regeneration of conversion at each modification on documents (default `True`),
     - `fusion_service_port` to tell Plone the port of the py3o.fusion service (default `8765`),
     - `fusion_service_host` to tell the host where it is served (default `localhost`),
+    - `fusion_timeout` to set the maximum time we will wait for py3o.fusion service response (default `10`),
     - `disable_async` to force conversion not to use async (default `False`).
 
 
@@ -113,17 +135,26 @@ Extend
 ======
 
 The way to get data from a content is an adapter of context and request that provides interface
-**collective.documentfusion.interfaces.IFusionData**
+**collective.documentfusion.interfaces.IFusionData**.
+
+The way to get images from a content is an adapter of context and request that provides interface
+**collective.documentfusion.interfaces.IImageMapping**. The present package provides no default for this adapter.
+This will replace the images named with a 'py3o.staticimage.' prefix like explained here:
+`http://py3otemplate.readthedocs.io/en/latest/templating.html#insert-placeholder-images`
+Note that if you need to include list of images for loops, you will use fusion data (cf `http://py3otemplate.readthedocs.io/en/latest/templating.html#insert-images-from-the-data-dictionary`).
+Mapping format to return is {name of image without 'py3o.staticimage.' prefix: NamedFile with data of image}
+
 
 The way to get the file field from a content is an adapter of context and request that provides interface
-**collective.documentfusion.interfaces.ISourceFile**
+**collective.documentfusion.interfaces.ISourceFile**.
 
 The way to get a list of data contents is an adapter of context and request that provides interface
-**collective.documentfusion.interfaces.IMergeDataSources**
+**collective.documentfusion.interfaces.IMergeDataSources**.
 
 If you need to consolidate data you get from sources during a merge fusion, you can write
 a **collective.documentfusion.interfaces.IFusionDataReducer** adapter
 where you will call IFusionData yourself and consolidate it with previous results.
+The present package provides no default for this adapter.
 
 Manual conversion
 =================
@@ -135,7 +166,7 @@ you can create your own, you just have to implement a **named adapter** for
 **IFusionData**, **ISourceFile** and (not mandatory) **IMergeDataSources**.
 
 Then, you will be able to refresh the conversion using the view
-`/@@documentfusion-refresh?conversion=my_conversion_name`
+`/@@documentfusion-refresh?conversion=my_conversion_name`.
 
 and to get it using the view `@@getdocumentfusion/?conversion=my_conversion_name`
 

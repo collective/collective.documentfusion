@@ -53,6 +53,12 @@ class IFusionData(Interface):
     """
 
 
+class IImageMapping(Interface):
+    """Adapter which provides the image mapping of a content.
+    Adapts object and request.
+    """
+
+
 class IMergeDataSources(Interface):
     """Adapter which provides the source contents for the document merge
     from the main document.
@@ -81,7 +87,7 @@ class IFusionStorage(Interface):
         """Get conversion status: success, failure or pending.
         """
 
-    def set_status(self, conversion_name=''):
+    def set_status(self, status, conversion_name=''):
         """Set conversion status.
         """
 

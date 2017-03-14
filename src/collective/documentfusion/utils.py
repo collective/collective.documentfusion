@@ -2,15 +2,23 @@ import os
 import tempfile
 
 from collective.documentfusion import logger
-from .interfaces import ISettings
+from collective.documentfusion.interfaces import (
+    IFusionData,
+    IImageMapping,
+    IModelFileSource,
+    IMergeDataSources,
+    ISettings,
+    IFusionDataReducer)
 from plone.app.blob.utils import guessMimetype
 from plone.namedfile.file import NamedBlobFile
 from plone.registry.interfaces import IRegistry
+from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.component.interfaces import ComponentLookupError
 
 try:
     from plone.app.async.interfaces import IAsyncService
+
     async_available = True
 except ImportError:
     async_available = False
@@ -70,3 +78,38 @@ def execute_job(function, *args, **kwargs):
             pass
 
     function(*args, **kwargs)
+
+
+def get_model_file_source(obj, request, conversion_name=''):
+    return getMultiAdapter((obj, request), IModelFileSource,
+                           name=conversion_name)()
+
+
+def get_merge_data_sources(obj, request, conversion_name=''):
+    return getMultiAdapter((obj, request),
+                           IMergeDataSources,
+                           name=conversion_name)()
+
+
+def get_fusion_data(obj, request, conversion_name=''):
+    return getMultiAdapter((obj, request), IFusionData,
+                           name=conversion_name)()
+
+
+def get_fusion_data_reducer(obj, request, conversion_name=''):
+    """Returns callable
+    """
+    try:
+        return getMultiAdapter((obj, request),
+                               IFusionDataReducer,
+                               name=conversion_name)
+    except ComponentLookupError:
+        return None
+
+
+def get_image_mapping(obj, request, conversion_name=''):
+    try:
+        return getMultiAdapter((obj, request), IImageMapping,
+                               name=conversion_name)()
+    except ComponentLookupError:
+        return None

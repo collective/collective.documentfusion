@@ -6,7 +6,7 @@ from collective.documentfusion.conversion import convert_file
 from collective.documentfusion.interfaces import (
     IFusionStorage,
     IFusionData, IModelFileSource, IMergeDataSources,
-    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED, IFusionDataReducer)
+    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED, IFusionDataReducer, IImageMapping)
 from zope.component import getMultiAdapter
 from zope.component.interfaces import ComponentLookupError
 from .utils import (
@@ -15,16 +15,17 @@ from .utils import (
     get_blob_from_fs_file,
     remove_if_exists,
     store_namedfile_in_fs_temp,
-)
+    get_fusion_data, get_image_mapping, get_model_file_source,
+    get_merge_data_sources, get_fusion_data_reducer)
 
 logger = logging.getLogger('collective.documentfusion.pdfmerge')
 
 
-def __merge_document(obj, named_file, fusion_data_list, conversion_name=''):
+def __merge_document(obj, named_file, fusion_data_list=None, image_mapping=None, conversion_name=''):
     # section of merge_document process that should be run asynchronously
     storage = IFusionStorage(obj)
     try:
-        merged_file = get_merged_file(named_file, fusion_data_list)
+        merged_file = get_merged_file(named_file, fusion_data_list=fusion_data_list, image_mapping=image_mapping)
     except Exception, e:
         storage.set_status(TASK_FAILED, conversion_name)
         storage.set_file(None, conversion_name)
@@ -52,33 +53,33 @@ def merge_document(obj, conversion_name=''):
     storage.set_status(TASK_IN_PROGRESS, conversion_name)
 
     # get source file
-    named_file = getMultiAdapter((obj, obj.REQUEST), IModelFileSource,
-                                 name=conversion_name)()
+    named_file = get_model_file_source(obj, obj.REQUEST,
+                                       conversion_name=conversion_name)
 
     # get contents from which we get data
-    external_fusion_sources = getMultiAdapter((obj, obj.REQUEST),
-                                              IMergeDataSources,
-                                              name=conversion_name)()
+    external_fusion_sources = get_merge_data_sources(obj, obj.REQUEST,
+                                                     conversion_name=conversion_name)
 
     try:
         # consolidate data if any reducer is provided (not by default)
-        reducer = getMultiAdapter((obj, obj.REQUEST),
-                                  IFusionDataReducer,
-                                  name=conversion_name)
-
+        reducer = get_fusion_data_reducer(obj, obj.REQUEST,
+                                          conversion_name=conversion_name)
         fusion_data_list = reduce(
             lambda c, v: (c[0] + 1, reducer(c[1], c[0], v)),
             external_fusion_sources,
             (0, []))[1]
     except ComponentLookupError:
         # if no reducer is provided, just get data from those contents in a list
-        fusion_data_list = (getMultiAdapter((source, obj.REQUEST), IFusionData,
-                                            name=conversion_name)()
+        fusion_data_list = (get_fusion_data(source, obj.REQUEST,
+                                            conversion_name=conversion_name)
                             for source in external_fusion_sources)
-        pass
+
+    image_mapping = get_image_mapping(obj, obj.REQUEST,
+                                      conversion_name=conversion_name)
 
     execute_job(__merge_document,
                 obj, named_file, fusion_data_list,
+                image_mapping=image_mapping,
                 conversion_name=conversion_name)
 
 
@@ -92,7 +93,7 @@ def merge_pdfs(source_file_pathes, merge_file_path):
     merger.write(str(merge_file_path))
 
 
-def get_merged_file(named_file, fusion_data_list):
+def get_merged_file(named_file, fusion_data_list, image_mapping=None):
     """Get a merged pdf file in a blob file
     from source named file, with target extension
     and the list of data dictionaries for fusion.
@@ -112,7 +113,8 @@ def get_merged_file(named_file, fusion_data_list):
                     tmp_source_file_path,
                     tmp_converted_subfile_path,
                     'pdf',
-                    fusion_data
+                    fusion_data=fusion_data,
+                    image_mapping=image_mapping
                 )
             except:
                 remove_if_exists(tmp_converted_subfile_path)
