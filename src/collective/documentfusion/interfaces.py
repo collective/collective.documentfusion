@@ -105,6 +105,11 @@ class ISettings(Interface):
         description=_(u"The hostname from where py3o.fusion is served"),
     )
 
+    fusion_timeout = Int(
+        title=_(u"Fusion service timeout",),
+        description=_(u"The maximum time (in seconds) the worker will wait for py3o.fusion service response.")
+    )
+
     auto_refresh_enabled = Bool(
         title=_(u"Automatic refresh enabled"),
         description=_(u"Automatic refresh of generated files is enabled"),

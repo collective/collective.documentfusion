@@ -44,4 +44,15 @@
     </field>
     <value>False</value>
   </record>
+  <record name="collective.documentfusion.interfaces.ISettings.fusion_timeout"
+          interface="collective.documentfusion.interfaces.ISettings"
+          field="fusion_timeout">
+    <field type="plone.registry.field.Int">
+      <default>10</default>
+      <description>The maximum time (in seconds) the worker will wait for py3o.fusion service response.</description>
+      <required>True</required>
+      <title>Fusion service timeout</title>
+    </field>
+    <value>10</value>
+  </record>
 </registry>
