@@ -179,3 +179,11 @@ It is highly recommended to install and configure plone.app.async
 in combination with this package. Doing so will manage all generations
 processes asynchronously so the user isn't delayed
 so much when saving files.
+
+
+Bypassing auto refresh
+======================
+
+Refresh is done at each document modification (on IObjectModified event).
+You can globally disable this with auto_refresh_enabled registry setting.
+You can globally disable it on the fly setting PREVENT_REFRESH_KEY value to True on request object.

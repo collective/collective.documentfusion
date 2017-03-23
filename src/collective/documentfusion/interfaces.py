@@ -12,6 +12,7 @@ TASK_FAILED = 'failed'
 DATA_STORAGE_KEY = 'collective.documentfusion.file'
 STATUS_STORAGE_KEY = 'collective.documentfusion.status'
 
+PREVENT_REFRESH_KEY = 'collective.documentfusion.prevent-refresh'
 
 class ICollectiveDocumentfusionLayer(IDefaultBrowserLayer):
     """Marker interface that defines a browser layer."""
