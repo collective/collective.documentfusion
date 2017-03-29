@@ -68,13 +68,13 @@ How to setup collective.documentfusion
 
 Install the product on your plone site.
 
-There are three Plone registry fields: ::
+The following Plone registry fields allow you to configure the product behaviour:
 
-    - `auto_refresh_enabled` to allow / disallow automatic regeneration of conversion at each modification on documents (default `True`),
-    - `fusion_service_port` to tell Plone the port of the py3o.fusion service (default `8765`),
-    - `fusion_service_host` to tell the host where it is served (default `localhost`),
-    - `fusion_timeout` to set the maximum time we will wait for py3o.fusion service response (default `10`),
-    - `disable_async` to force conversion not to use async (default `False`).
+- `auto_refresh_enabled` to allow / disallow automatic regeneration of conversion at each modification on documents (default `True`),
+- `fusion_service_port` to tell Plone the port of the py3o.fusion service (default `8765`),
+- `fusion_service_host` to tell the host where it is served (default `localhost`),
+- `fusion_timeout` to set the maximum time we will wait for py3o.fusion service response (default `10`),
+- `disable_async` to force conversion not to use async (default `False`).
 
 
 How to use collective.documentfusion
