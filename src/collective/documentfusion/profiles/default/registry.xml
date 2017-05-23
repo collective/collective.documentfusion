@@ -32,7 +32,7 @@
       <required>True</required>
       <title>py3o.renderserver port</title>
     </field>
-    <value>8765</value>
+    <value>8994</value>
   </record>
   <record name="collective.documentfusion.interfaces.ISettings.conversion_service_host"
           interface="collective.documentfusion.interfaces.ISettings"
