@@ -25,6 +25,8 @@ except ImportError:
 
 
 def filename_split(filename):
+    """Get name and extension.
+    """
     return filename.rsplit('.', 1)
 
 

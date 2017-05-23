@@ -102,6 +102,16 @@ class IFusionStorage(Interface):
 
 
 class ISettings(Interface):
+    conversion_service_port = Int(
+        title=_(u"Conversion service port"),
+        description=_(u"The port used by py3o.renderserver service"),
+    )
+
+    conversion_service_host = ASCIILine(
+        title=_(u"Conversion service host"),
+        description=_(u"The hostname from where py3o.renderserver is served"),
+    )
+
     fusion_service_port = Int(
         title=_(u"Fusion service port"),
         description=_(u"The port used by py3o.fusion service"),

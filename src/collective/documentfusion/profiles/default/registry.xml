@@ -22,6 +22,30 @@
     </field>
     <value>localhost</value>
   </record>
+
+  <record name="collective.documentfusion.interfaces.ISettings.conversion_service_port"
+          interface="collective.documentfusion.interfaces.ISettings"
+          field="conversion_service_port">
+    <field type="plone.registry.field.Int">
+      <default>8994</default>
+      <description>py3o.renderserver port</description>
+      <required>True</required>
+      <title>py3o.renderserver port</title>
+    </field>
+    <value>8765</value>
+  </record>
+  <record name="collective.documentfusion.interfaces.ISettings.conversion_service_host"
+          interface="collective.documentfusion.interfaces.ISettings"
+          field="conversion_service_host">
+    <field type="plone.registry.field.ASCIILine">
+      <default>localhost</default>
+      <description>py3o.renderserver host</description>
+      <required>True</required>
+      <title>py3o.renderserver host</title>
+    </field>
+    <value>localhost</value>
+  </record>
+
   <record name="collective.documentfusion.interfaces.ISettings.auto_refresh_enabled"
           interface="collective.documentfusion.interfaces.ISettings"
           field="auto_refresh_enabled">

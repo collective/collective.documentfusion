@@ -9,6 +9,7 @@ from collective.documentfusion.exceptions import Py3oException
 from collective.documentfusion.interfaces import (
     ISettings, IFusionStorage, TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED)
 from plone.registry.interfaces import IRegistry
+from py3o.renderclient.client import RenderClient
 from zope.component import getUtility
 from .utils import (
     execute_job,
@@ -91,43 +92,49 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
     using libreoffice service
     """
     settings = getUtility(IRegistry).forInterface(ISettings)
-    files = {
-        'tmpl_file': open(tmp_source_file_path, 'rb')
-    }
-    if not fusion_data:
-        fusion_data = {}
+
+    if not fusion_data and not image_mapping:
+        # this is just a conversion, directly use converter
+        client = RenderClient(settings.conversion_service_host, settings.conversion_service_port)
+        client.render(tmp_source_file_path, tmp_converted_file_path, target_format=target_ext)
     else:
-        fusion_data = {'document': fusion_data}
+        files = {
+            'tmpl_file': open(tmp_source_file_path, 'rb')
+        }
+        if not fusion_data:
+            fusion_data = {}
+        else:
+            fusion_data = {'document': fusion_data}
 
-    fields = {
-        "targetformat": target_ext,
-        "datadict": json.dumps(fusion_data),
-    }
+        fields = {
+            "targetformat": target_ext,
+            "datadict": json.dumps(fusion_data),
+        }
 
-    py3o_image_mapping = {}
-    if image_mapping:
-        for field, image_file in image_mapping.iteritems():
-            py3o_image_mapping['staticimage.' + field] = 'staticimage.' + field
-            fields['staticimage.' + field] = image_file.data
+        py3o_image_mapping = {}
+        if image_mapping:
+            for field, image_file in image_mapping.iteritems():
+                py3o_image_mapping['staticimage.' + field] = 'staticimage.' + field
+                fields['staticimage.' + field] = image_file.data
 
-        fields['image_mapping'] = json.dumps(py3o_image_mapping)
-    else:
-        fields['image_mapping'] = "{}"
+            fields['image_mapping'] = json.dumps(py3o_image_mapping)
+        else:
+            fields['image_mapping'] = "{}"
 
-    req = requests.post(
-        "http://%s:%s/form" % (settings.fusion_service_host, settings.fusion_service_port),
-        data=fields,
-        files=files,
-        timeout=settings.fusion_timeout,
-    )
-    if req.status_code != 400:
-        chunk_size = 1024
-        with open(tmp_converted_file_path, 'wb') as fd:
-            for chunk in req.iter_content(chunk_size):
-                fd.write(chunk)
-    else:
-        logger.error("Failed to convert file: %s with data: %s", files, fields)
-        raise Py3oException("py3o.fusion server error: %s", req.text)
+        req = requests.post(
+            "http://%s:%s/form" % (settings.fusion_service_host, settings.fusion_service_port),
+            data=fields,
+            files=files,
+            timeout=settings.fusion_timeout,
+        )
+        if req.status_code != 400:
+            chunk_size = 1024
+            with open(tmp_converted_file_path, 'wb') as fd:
+                for chunk in req.iter_content(chunk_size):
+                    fd.write(chunk)
+        else:
+            logger.error("Failed to convert file: %s with data: %s", files, fields)
+            raise Py3oException("py3o.fusion server error: %s", req.text)
 
     assert os.path.exists(tmp_converted_file_path)
 
