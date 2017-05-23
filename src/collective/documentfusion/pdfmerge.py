@@ -2,12 +2,10 @@ import logging
 import tempfile
 
 from PyPDF2 import PdfFileMerger, PdfFileReader
-from collective.documentfusion.conversion import convert_file
+from collective.documentfusion.conversion import convert_fs_file
 from collective.documentfusion.interfaces import (
     IFusionStorage,
-    IFusionData, IModelFileSource, IMergeDataSources,
-    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED, IFusionDataReducer, IImageMapping)
-from zope.component import getMultiAdapter
+    TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED)
 from zope.component.interfaces import ComponentLookupError
 from .utils import (
     execute_job,
@@ -109,7 +107,7 @@ def get_merged_file(named_file, fusion_data_list, image_mapping=None):
             suffix = '--%s-%s.pdf' % (num, base_filename)
             tmp_converted_subfile_path = tempfile.mktemp(suffix=suffix)
             try:
-                convert_file(
+                convert_fs_file(
                     tmp_source_file_path,
                     tmp_converted_subfile_path,
                     'pdf',

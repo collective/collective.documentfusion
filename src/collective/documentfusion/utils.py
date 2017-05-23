@@ -87,6 +87,12 @@ def get_model_file_source(obj, request, conversion_name=''):
                            name=conversion_name)()
 
 
+def get_target_extension(obj, request, conversion_name=''):
+    adapter = getMultiAdapter((obj, request), IModelFileSource,
+                              name=conversion_name)
+    return getattr(adapter, 'target_extension', None)
+
+
 def get_merge_data_sources(obj, request, conversion_name=''):
     return getMultiAdapter((obj, request),
                            IMergeDataSources,

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Module where all interfaces, events and exceptions live."""
+from zope.interface.interface import Attribute
 from zope.schema import ASCIILine, Bool, Int
 from zope.component import Interface
 from zope.publisher.interfaces.browser import IDefaultBrowserLayer
@@ -46,6 +47,7 @@ class IModelFileSource(Interface):
     """Adapter which provides the model file of a content for fusion.
     Adapts object and request.
     """
+    target_extension = Attribute("""The extension of target file. If not set, we use the extension of the model.""")
 
 
 class IFusionData(Interface):

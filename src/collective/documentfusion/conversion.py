@@ -17,7 +17,10 @@ from .utils import (
     get_blob_from_fs_file,
     store_namedfile_in_fs_temp,
     remove_if_exists,
-    get_fusion_data, get_image_mapping, get_model_file_source)
+    get_fusion_data,
+    get_image_mapping,
+    get_model_file_source,
+    get_target_extension)
 
 logger = logging.getLogger('collective.documentfusion.conversion')
 
@@ -60,6 +63,19 @@ def convert_document(obj, target_extension=None, make_fusion=False,
        eventually filled with data get from a source
        if we have many sources, we get a merge of this document filled with all
        sources
+        
+       @param obj: Object
+            plone content from which we get
+       @param target_extension: string
+            The extension of output document. If not set,
+            target_extension attribute of IModelSourceFile adapter will be used,
+            else the extension of source file
+       
+       @param make_fusion: bool.
+            If true, we will try to get fusion data and inject it into model using py3o.fusion
+       
+       @param conversion_name: string
+            The name of the adapters to get source file, fusion data, image mapping
     """
     storage = IFusionStorage(obj)
     storage.set_file(None, conversion_name)
@@ -69,7 +85,7 @@ def convert_document(obj, target_extension=None, make_fusion=False,
     source_extension = filename_split(named_file.filename)[1]
 
     if not target_extension:
-        target_extension = source_extension
+        target_extension = get_target_extension(obj, obj.REQUEST, conversion_name) or source_extension
 
     if make_fusion:
         fusion_data = get_fusion_data(obj, obj.REQUEST, conversion_name)
@@ -85,9 +101,9 @@ def convert_document(obj, target_extension=None, make_fusion=False,
                 )
 
 
-def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
-                 fusion_data=None, image_mapping=None):
-    """Uses py3o to convert a file into an other format
+def convert_fs_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
+                    fusion_data=None, image_mapping=None):
+    """Uses py3o to convert a file stored on fs into an other
     filling properties, bookmarks and fields with data
     using libreoffice service
     """
@@ -142,6 +158,7 @@ def convert_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
 def get_converted_file(named_file, target_ext, fusion_data=None, image_mapping=None):
     """Get a converted file in a blob file
     from source named file, with target extension and fusion data and / or image mapping as a dict.
+    @return NamedBlobFile
     """
     tmp_source_file_path = store_namedfile_in_fs_temp(named_file)
 
@@ -149,7 +166,7 @@ def get_converted_file(named_file, target_ext, fusion_data=None, image_mapping=N
     tmp_converted_file_path = tempfile.mktemp(suffix=suffix)
 
     try:
-        convert_file(
+        convert_fs_file(
             tmp_source_file_path,
             tmp_converted_file_path,
             target_ext,
