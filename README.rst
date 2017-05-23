@@ -213,6 +213,19 @@ and to get it using the view `@@getdocumentfusion/?conversion=my_conversion_name
 
 where my_conversion_name is the name you gave to the adapters.
 
+
+Update document with custom conversion
+--------------------------------------
+
+You will need to subscribe on modified and manually execute refresh_conversion method
+
+For instance (here we use grok for subscriber registration)
+
+    @grok.subscribe(IMyProject, IObjectModifiedEvent)
+    def update_report(project, event):
+        refresh_conversion(project, conversion_name='report', make_pdf=False)
+
+
 Async Integration
 =================
 

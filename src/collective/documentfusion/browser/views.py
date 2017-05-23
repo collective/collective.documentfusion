@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 from zope.i18n import translate
 from zope.i18nmessageid.message import MessageFactory
 
@@ -10,8 +12,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 from collective.documentfusion.interfaces import (
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED)
 from collective.documentfusion.interfaces import IFusionStorage
-from collective.documentfusion.api import refresh_conversion, \
-    apply_specific_conversion
+from collective.documentfusion.api import refresh_conversion
 from collective.documentfusion import _
 
 PMF = MessageFactory('plone')
@@ -107,11 +108,12 @@ class RefreshView(BrowserView):
 
     def refresh(self):
         conversion_name = self.request.get('conversion', '')
+        # TODO: POST only
         pdf = self.request.get('pdf', None)
         if conversion_name or pdf:
-            apply_specific_conversion(self.context,
-                                      conversion_name=conversion_name,
-                                      make_pdf=pdf)
+            refresh_conversion(self.context,
+                               conversion_name=conversion_name,
+                               make_pdf=pdf)
         else:
             refresh_conversion(self.context)
 
