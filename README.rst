@@ -135,7 +135,23 @@ Extend
 ======
 
 The way to get data from a content is an adapter of context and request that provides interface
-**collective.documentfusion.interfaces.IFusionData**.
+**collective.documentfusion.interfaces.IFusionData**. This adapter returns a mapping of data to replace in file model.
+
+An example of **IFusionData** adapter:
+
+    class ProjectFusionData(object):
+        adapts(IProject, IMyLayer)
+        implements(IFusionData)
+
+        def __init__(self, context, request):
+            self.context = context
+            self.request = request
+
+        def __call__(self):
+            context = self.context
+            data = {'title': context.Title(), 'description': context.Description'}
+            return data
+
 
 The way to get images from a content is an adapter of context and request that provides interface
 **collective.documentfusion.interfaces.IImageMapping**. The present package provides no default for this adapter.
@@ -146,10 +162,35 @@ Mapping format to return is {name of image without 'py3o.staticimage.' prefix: N
 
 
 The way to get the file field from a content is an adapter of context and request that provides interface
-**collective.documentfusion.interfaces.ISourceFile**.
+**collective.documentfusion.interfaces.IModelFileSource**. It returns a NamedFile containing the model file data.
+
+An example of **IModelFileSource** adapter:
+
+    MODEL_FILE = os.path.join(os.path.dirname(__file__), 'project-model.odt')
+    EXTENDED_MODEL_FILE = os.path.join(os.path.dirname(__file__), 'extended-project-model.odt')
+
+    class ProjectSourceFile(object):
+        adapts(IProject, IMyLayer)
+        implements(IModelFileSource)
+
+        def __init__(self, context, request):
+            self.context, self.request = context, request
+
+        def __call__(self, recursive=True):
+            if self.context.extended_project:
+                model = EXTENDED_MODEL_FILE
+            else:
+                model = MODEL_FILE
+
+            filename = normalizeString(unicode(self.context.Title()),
+                                       context=self.context)
+            return NamedFile(data=open(model).read(),
+                             filename=unicode(filename) + u'.odt')
+
 
 The way to get a list of data contents is an adapter of context and request that provides interface
 **collective.documentfusion.interfaces.IMergeDataSources**.
+
 
 If you need to consolidate data you get from sources during a merge fusion, you can write
 a **collective.documentfusion.interfaces.IFusionDataReducer** adapter
@@ -162,8 +203,8 @@ Manual conversion
 If you don't want / need to use the behaviours,
 (or if you want to add a conversion
 on a content type that already have an automatic conversion),
-you can create your own, you just have to implement a **named adapter** for
-**IFusionData**, **ISourceFile** and (not mandatory) **IMergeDataSources**.
+you can create your own, you just have to implement **named adapters** for
+**IFusionData**, **IModelFileSource** and (not mandatory) **IMergeDataSources**.
 
 Then, you will be able to refresh the conversion using the view
 `/@@documentfusion-refresh?conversion=my_conversion_name`.
