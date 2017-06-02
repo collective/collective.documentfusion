@@ -1,0 +1,33 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      tal:omit-tag=""
+      i18n:domain="collective.documentfusion">
+<div tal:attributes="class string:documentfusion-viewlet documentfusion-status-${view/status/id};
+                     id python:'documentfusion-viewlet-' + view.conversion_name if view.conversion_name else 'documentfusion-viewlet'">
+  <dl tal:attributes="class string:portalMessage ${view/status/status-class}">
+    <dt i18n:domain="plone" tal:content="view/status/status-label">Info</dt>
+    <dd>
+      <a class="documentfusion-download"
+         tal:condition="view/status/downloadable"
+         tal:attributes="href string:${context/absolute_url}/download-documentfusion?conversion=${view/conversion_name};
+                         title view/status/msg">
+        <img tal:attributes="src view/icon_path"/> <span tal:content="view/filename">Download document</span>
+      </a>
+      <span tal:condition="not:view/status/downloadable"
+            tal:content="view/status/msg"
+            i18n:translate="">Generating content...</span>
+      <button
+        type="button"
+        tal:condition="view/status/allow-retry"
+        class="btn documentfusion-refresh"
+        title="Refresh document"
+        tal:attributes="data-url string:${context/absolute_url}/refresh-documentfusion;
+                        data-makepdf python:view.make_pdf;"
+        i18n:attributes="title">
+        <img tal:attributes="src string:${view/site_url}/reload.png">
+      </button>
+    </dd>
+  </dl>
+</div>
+</html>

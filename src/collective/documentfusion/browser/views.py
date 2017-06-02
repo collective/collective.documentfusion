@@ -1,97 +1,109 @@
 # -*- encoding: utf-8 -*-
-
-from zope.i18n import translate
-from zope.i18nmessageid.message import MessageFactory
-
-from plone.app.layout.viewlets.common import ViewletBase
-from plone.namedfile.utils import stream_data, set_headers
+from copy import deepcopy
 from Products.Five.browser import BrowserView
-from Products.CMFCore.utils import getToolByName
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.statusmessages.interfaces import IStatusMessage
-
+from collective.documentfusion import _
+from collective.documentfusion.api import refresh_conversion
+from collective.documentfusion.interfaces import IFusionStorage
 from collective.documentfusion.interfaces import (
     TASK_IN_PROGRESS, TASK_FAILED, TASK_SUCCEEDED)
-from collective.documentfusion.interfaces import IFusionStorage
-from collective.documentfusion.api import refresh_conversion
-from collective.documentfusion import _
+from plone import api
+from plone.app.layout.viewlets.common import ViewletBase
+from plone.namedfile.utils import stream_data, set_headers
+from plone.protect import PostOnly
+from zope.i18nmessageid.message import MessageFactory
 
 PMF = MessageFactory('plone')
 
-PORTAL_MESSAGE = u"""
-<div class="viewlet-documentfusion-downloadlink">
-  <dl class="portalMessage %(statusid)s">
-            <dt>%(status)s</dt>
-            <dd>%(msg)s</dd>
-  </dl>
-</div>
-"""
+NO_STATUS = 'no-status'
+
+STATUS_MESSAGES = {
+    NO_STATUS: {
+        'id': NO_STATUS,
+        'msg': _(u"No document generated here"),
+        'status-label': PMF(u"Info"),
+        'status-class': 'error',
+        'downloadable': False,
+        'allow-retry': True,
+    },
+    TASK_SUCCEEDED: {
+        'id': TASK_SUCCEEDED,
+        'msg': _(u"Get the generated file."),
+        'status-label': PMF(u"Info"),
+        'status-class': 'info',
+        'downloadable': True,
+        'allow-retry': True,
+    },
+    TASK_IN_PROGRESS: {
+        'id': TASK_IN_PROGRESS,
+        'msg': _(u"Processing document generation..."),
+        'status-label': PMF(u"Info"),
+        'status-class': 'info',
+        'downloadable': False,
+        'allow-retry': False,
+    },
+    TASK_FAILED: {
+        'id': TASK_FAILED,
+        'msg': _(u"Document generation failed, please retry or contact your administrator"),
+        'status-label': PMF(u"Error"),
+        'status-class': 'error',
+        'downloadable': False,
+        'allow-retry': True,
+    }
+}
 
 
-class DownloadLinkViewlet(ViewletBase):
+class StatusViewletMixin(object):
+
+    viewlet_template = ViewPageTemplateFile('viewlet.pt')
+    conversion_name = NotImplemented
+    make_pdf = None  # None, 1 or 0
+    status = None  # status info for template
+    icon_path = ''
+    site_url = ''
+    filename = ''
+
+    def update(self):
+        if self.conversion_name == NotImplemented:
+            raise NotImplementedError('conversion_name is missing on %s at update time' % self)
+        conversion_name = self.conversion_name
+        storage = IFusionStorage(self.context)
+        status = storage.get_status(conversion_name) or NO_STATUS
+        self.status = deepcopy(STATUS_MESSAGES[status])
+        self.site_url = api.portal.get().absolute_url()
+        mimetype = storage.get_mimetype(conversion_name)
+        file_obj = storage.get_file(conversion_name)
+        if mimetype:
+            self.icon_path = mimetype.icon_path
+            self.filename = file_obj.filename
+
+    def render_viewlet(self):
+        return self.viewlet_template()
+
+
+class DocumentFusionViewlet(StatusViewletMixin, ViewletBase):
+    conversion_name = ''  # default one
+
     def index(self):
-        context = self.context
-        storage = IFusionStorage(context)
-        status = storage.get_status()
-        named_file = storage.get_file()
-        if status == TASK_IN_PROGRESS:
-            return PORTAL_MESSAGE % {'statusid': 'info',
-                                     'status': PMF(u"Info"),
-                                     'msg': translate(
-                                         _(u"Processing document generation, "
-                                           u"please refresh the page..."),
-                                         context=self.request)}
-        elif status == TASK_FAILED:
-            return PORTAL_MESSAGE % {'statusid': 'warning',
-                                     'status': PMF(u"Error"),
-                                     'msg': translate(
-                                         _(u"Document generation failed, "
-                                           u"please retry "
-                                           u"or contact your administrator"),
-                                         context=self.request)}
-        elif not status:
-            return u""
-
-        url = u"%s/getdocumentfusion" % context.absolute_url()
-        title = translate(_(u"Get the generated file."), context=self.request)
-
-        mtregistry = getToolByName(self.context, 'mimetypes_registry')
-        file_name = named_file.filename
-        mimetype = mtregistry.lookupExtension(file_name)
-        icon_path = "%s/%s" % (self.portal_url, mimetype.icon_path)
-        return u"""
-        <div class="viewlet-documentfusion-downloadlink viewlet-documentfusion-generated">
-          <a href="%s" title="%s">
-            <img src="%s" /> %s
-          </a>
-        </div>""" % (url, title, icon_path, file_name)
+        return self.render_viewlet()
 
 
 class DownloadView(BrowserView):
     def __call__(self):
         conversion_name = self.request.get('conversion', '')
         context, request = self.context, self.request
-        # TODO: delegate storage
         storage = IFusionStorage(context)
-        status = storage.get_status(conversion_name)
+        status = storage.get_status(conversion_name) or NO_STATUS
         named_file = storage.get_file(conversion_name)
         if status == TASK_SUCCEEDED:
             set_headers(named_file,
                         request.response, filename=named_file.filename)
             return stream_data(named_file)
-
-        if status == TASK_IN_PROGRESS:
+        else:
             IStatusMessage(request).add(
-                _(u"Document generation in progress, please retry later..."),
-                type='warning')
-        elif status == TASK_FAILED:
-            IStatusMessage(request).add(
-                _(
-                    u"Document generation failed, please retry document generation"
-                    u" or contact your administrator..."),
-                type='error')
-        elif not status or not named_file:
-            IStatusMessage(request).add(_(u"No document generated here"),
-                                        type='error')
+                STATUS_MESSAGES[status]['msg'],
+                type=STATUS_MESSAGES[status]['status-class'])
 
         redirect_to = request.get('redirect_fail', '')
         if not redirect_to:
@@ -99,7 +111,8 @@ class DownloadView(BrowserView):
         return request.response.redirect(redirect_to)
 
 
-class RefreshView(BrowserView):
+class RefreshView(StatusViewletMixin, BrowserView):
+
     def enabled(self):
         return True
 
@@ -107,21 +120,30 @@ class RefreshView(BrowserView):
         return False
 
     def refresh(self):
-        conversion_name = self.request.get('conversion', '')
-        # TODO: POST only
-        pdf = self.request.get('pdf', None)
-        if conversion_name or pdf:
-            refresh_conversion(self.context,
-                               conversion_name=conversion_name,
-                               make_pdf=pdf)
-        else:
-            refresh_conversion(self.context)
+        context, request = self.context, self.request
+        PostOnly(request)
+        self.conversion_name = request.get('conversion', None)
+        make_pdf = int(request['pdf']) if request.get('pdf', None) else None
+        refresh_conversion(context,
+                           conversion_name=self.conversion_name,
+                           make_pdf=make_pdf)
 
-        redirect_to = self.request.get('redirect_to', '')
-        ajax_load = self.request.get('ajax_load', '')
+        ajax_load = request.get('ajax_load', '')
         if ajax_load:
-            return ''
+            self.update()
+            return self.render_viewlet()
 
+        redirect_to = request.get('redirect_to', '')
         if not redirect_to:
             redirect_to = "%s/view" % self.context.absolute_url()
-        return self.request.response.redirect(redirect_to)
+
+        return request.response.redirect(redirect_to)
+
+
+class StatusView(StatusViewletMixin, BrowserView):
+
+    def render_status(self):
+        request = self.request
+        self.conversion_name = request.get('conversion', None)
+        self.update()
+        return self.render_viewlet()

@@ -2,16 +2,25 @@
 collective.documentfusion
 =========================
 
-Adds behaviours to make a merge between the variables, properties and bookmarks
+Adds behaviours to make a merge between the variables
 of a file field with the fields of a dexterity content,
 and publish the generated version of the document in its original format or in pdf format.
 
 You can also make a merge between a field and several dexterity contents,
 then it will generate a pdf with a version of the file successively merged with
 each of those documents.
-This is not dedicated to merge hundreds of documents, but fits well with few or dozens.
 
 You can also use this product to simply provide pdf conversion of a file.
+
+A viewlet that allows you to download and refresh the generated document will be available
+
+You can configure a single generation for each content type through online configuration.
+With component declaration, you can configure as many generations as you want.
+
+The product is extensible: with adapters, you can write specific fusions and conversions.
+
+This is not dedicated to merge hundreds of documents, but fits well with few or dozens.
+
 
 
 How to install fusion infrastructure
@@ -207,9 +216,9 @@ you can create your own, you just have to implement **named adapters** for
 **IFusionData**, **IModelFileSource** and (not mandatory) **IMergeDataSources**.
 
 Then, you will be able to refresh the conversion using the view
-`/@@documentfusion-refresh?conversion=my_conversion_name`.
+`/@@refresh-documentfusion?conversion=my_conversion_name`.
 
-and to get it using the view `@@getdocumentfusion/?conversion=my_conversion_name`
+and to get it using the view `@@download-documentfusion/?conversion=my_conversion_name`
 
 where my_conversion_name is the name you gave to the adapters.
 

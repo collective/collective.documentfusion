@@ -3,18 +3,22 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     i18n_domain="collective.documentfusion">
 
+    <browser:resource
+        name="documentfusion.js"
+        file="documentfusion.js" />
+
     <browser:viewlet
-        name="collective.documentfusion.download_link"
+        name="collective.documentfusion.viewlet"
         for="collective.documentfusion.interfaces.IGeneration"
         manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
         view="plone.app.layout.globals.interfaces.IViewView"
         layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
-        class=".views.DownloadLinkViewlet"
+        class=".views.DocumentFusionViewlet"
         permission="zope2.View"
         />
 
     <browser:view
-        name="getdocumentfusion"
+        name="download-documentfusion"
         for="collective.documentfusion.interfaces.IGeneration"
         layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
         class=".views.DownloadView"
@@ -40,7 +44,7 @@
         />
 
     <browser:page
-        name="documentfusion-refresh"
+        name="refresh-documentfusion"
         for="collective.documentfusion.interfaces.IGeneration"
         layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
         class=".views.RefreshView"
@@ -48,4 +52,12 @@
         permission="zope2.View"
         />
 
+    <browser:page
+        name="documentfusion-status"
+        for="collective.documentfusion.interfaces.IGeneration"
+        layer="collective.documentfusion.interfaces.ICollectiveDocumentfusionLayer"
+        class=".views.StatusView"
+        attribute="render_status"
+        permission="zope2.View"
+        />
 </configure>

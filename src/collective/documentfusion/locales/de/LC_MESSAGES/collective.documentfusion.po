@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2014-06-26 09:42+0000\n"
+"POT-Creation-Date: 2017-06-01 21:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI +ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,47 +17,122 @@ msgstr ""
 "Preferred-Encodings: utf-8 latin1\n"
 "Domain: collective.documentfusion\n"
 
-#: ../browser/views.py:78
-msgid "Document generation failed, please retry document generation or contact your administrator..."
+#: ../interfaces.py:133
+msgid "Automatic refresh enabled"
 msgstr ""
 
-#: ../browser/views.py:42
+#: ../interfaces.py:134
+msgid "Automatic refresh of generated files is enabled"
+msgstr ""
+
+#: ../interfaces.py:113
+msgid "Conversion service host"
+msgstr ""
+
+#: ../interfaces.py:108
+msgid "Conversion service port"
+msgstr ""
+
+#: ../browser/views.py:43
 msgid "Document generation failed, please retry or contact your administrator"
 msgstr ""
 
-#: ../browser/views.py:75
-msgid "Document generation in progress, please retry later..."
+#: ../interfaces.py:139
+msgid "For development or test mode"
 msgstr ""
 
-#: ../browser/views.py:48
+#: ../interfaces.py:123
+msgid "Fusion service host"
+msgstr ""
+
+#: ../interfaces.py:118
+msgid "Fusion service port"
+msgstr ""
+
+#: ../interfaces.py:128
+msgid "Fusion service timeout"
+msgstr ""
+
+#: ../configure.zcml:62
+msgid "Generates a PDF version of the main file of the content. Combined with Document fusion behavior, the pdf is generated with a fusion with content fields."
+msgstr ""
+
+#: ../browser/views.py:29
 msgid "Get the generated file."
 msgstr ""
 
-#: ../interfaces.py:60
-msgid "LibreOffice host"
+#: ../configure.zcml:35
+msgid "Installs the collective.documentfusion add-on."
 msgstr ""
 
-#: ../interfaces.py:57
-msgid "LibreOffice port"
-msgstr ""
-
-#: ../browser/views.py:81
+#: ../browser/views.py:22
 msgid "No document generated here"
 msgstr ""
 
-#: ../browser/views.py:37
-msgid "Processing document generation, please refresh the page..."
+#: ../interfaces.py:138
+msgid "Prevent using async document generation"
+msgstr ""
+
+#: ../browser/views.py:36
+msgid "Processing document generation..."
+msgstr ""
+
+#: ../browser/viewlet.pt:15
+msgid "Refresh document"
 msgstr ""
 
 #: ../profiles/default/actions.xml
 msgid "Refresh generated document"
 msgstr ""
 
-#: ../interfaces.py:61
-msgid "The hostname from where LibreOffice is served"
+#: ../testing.zcml:16
+msgid "Steps to ease tests of collective.documentfusion"
 msgstr ""
 
-#: ../interfaces.py:58
-msgid "The port used by LibreOffice service"
+#: ../interfaces.py:124
+msgid "The hostname from where py3o.fusion is served"
 msgstr ""
 
+#: ../interfaces.py:114
+msgid "The hostname from where py3o.renderserver is served"
+msgstr ""
+
+#: ../interfaces.py:129
+msgid "The maximum time (in seconds) the worker will wait for py3o.fusion service response."
+msgstr ""
+
+#: ../interfaces.py:119
+msgid "The port used by py3o.fusion service"
+msgstr ""
+
+#: ../interfaces.py:109
+msgid "The port used by py3o.renderserver service"
+msgstr ""
+
+#: ../configure.zcml:50
+msgid "We generate a fusion of the file field of the document with other fields of the document."
+msgstr ""
+
+#: ../configure.zcml:56
+msgid "We generate a pdf merge of fusions of the file field of the document with the field each document related items."
+msgstr ""
+
+#: ../configure.zcml:35
+msgid "collective.documentfusion"
+msgstr ""
+
+#: ../testing.zcml:16
+msgid "collective.documentfusion tests"
+msgstr ""
+
+#: ../configure.zcml:50
+msgid "collective.documentfusion: Document fusion"
+msgstr ""
+
+#: ../configure.zcml:56
+msgid "collective.documentfusion: Merged document fusion"
+msgstr ""
+
+#: ../configure.zcml:62
+msgid "collective.documentfusion: PDF Generation"
+msgstr ""

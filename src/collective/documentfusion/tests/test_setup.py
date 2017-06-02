@@ -127,7 +127,7 @@ class TestInstall(IntegrationTestCase):
         status = annotations.get(STATUS_STORAGE_KEY, None)
         self.assertEqual(status, TASK_SUCCEEDED)
 
-        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        generated_stream = content.unrestrictedTraverse('@@download-documentfusion')()
         self.assertTrue(generated_stream)
         self.assertEqual(self.portal.REQUEST.response['content-type'],
                          'application/pdf')
@@ -169,7 +169,7 @@ class TestInstall(IntegrationTestCase):
 
         notify(ObjectModifiedEvent(content))
 
-        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        generated_stream = content.unrestrictedTraverse('@@download-documentfusion')()
         self.assertTrue(generated_stream)
         self.assertEqual(self.portal.REQUEST.response['content-type'],
                          'application/pdf')
@@ -220,7 +220,7 @@ class TestInstall(IntegrationTestCase):
 
         notify(ObjectModifiedEvent(content))
 
-        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        generated_stream = content.unrestrictedTraverse('@@download-documentfusion')()
         self.assertTrue(generated_stream)
         self.assertEqual(self.portal.REQUEST.response['content-type'],
                          'application/pdf')
@@ -284,7 +284,7 @@ class TestInstall(IntegrationTestCase):
 
         notify(ObjectModifiedEvent(content))
 
-        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        generated_stream = content.unrestrictedTraverse('@@download-documentfusion')()
         self.assertTrue(generated_stream)
         self.assertEqual(self.portal.REQUEST.response['content-type'],
                          'application/pdf')
@@ -331,13 +331,12 @@ class TestInstall(IntegrationTestCase):
                                      relatedItems=[RelationValue(intids.getId(model))],
                                      )
 
-        content.unrestrictedTraverse('@@documentfusion-refresh')()
+        content.unrestrictedTraverse('@@refresh-documentfusion')()
         notify(ObjectModifiedEvent(content))
 
-        generated_stream = content.unrestrictedTraverse('@@getdocumentfusion')()
+        generated_stream = content.unrestrictedTraverse('@@download-documentfusion')()
         self.assertTrue(generated_stream)
-        self.assertEqual(self.portal.REQUEST.response['content-type'],
-                         'application/pdf')
+        self.assertEqual(self.portal.REQUEST.response['content-type'], 'application/pdf')
         generated_path = tempfile.mktemp(suffix='invoice.pdf')
         generated_file = open(generated_path, 'w')
         generated_file.write(generated_stream.read())

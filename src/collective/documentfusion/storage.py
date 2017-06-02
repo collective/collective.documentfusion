@@ -3,6 +3,7 @@ from collective.documentfusion.interfaces import (
 from zope.annotation.interfaces import IAnnotations, IAnnotatable
 from zope.component import adapts
 from zope.interface import implements
+from plone import api
 
 
 class FusionStorage(object):
@@ -42,6 +43,15 @@ class FusionStorage(object):
             key = DATA_STORAGE_KEY
 
         return self.annotations.get(key, None)
+
+    def get_mimetype(self, conversion_name=''):
+        named_file = self.get_file(conversion_name)
+        if not named_file:
+            return None
+
+        mtregistry = api.portal.get_tool('mimetypes_registry')
+        file_name = named_file.filename
+        return mtregistry.lookupExtension(file_name)
 
     def set_file(self, named_file, conversion_name=''):
         """Set converted file.
