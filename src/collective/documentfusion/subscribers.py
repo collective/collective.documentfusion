@@ -8,7 +8,6 @@ from zope.container.interfaces import IContainerModifiedEvent
 
 
 def refresh(obj, event=None):
-    # TODO: get all conversions
     if IContainerModifiedEvent.providedBy(event):
         return
 
