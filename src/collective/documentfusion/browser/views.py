@@ -1,5 +1,10 @@
 # -*- encoding: utf-8 -*-
 from copy import deepcopy
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.statusmessages.interfaces import IStatusMessage
@@ -12,6 +17,7 @@ from plone import api
 from plone.app.layout.viewlets.common import ViewletBase
 from plone.namedfile.utils import stream_data, set_headers
 from plone.protect import PostOnly
+from zope.i18n import translate
 from zope.i18nmessageid.message import MessageFactory
 
 PMF = MessageFactory('plone')
@@ -55,7 +61,6 @@ STATUS_MESSAGES = {
 
 
 class StatusViewletMixin(object):
-
     viewlet_template = ViewPageTemplateFile('viewlet.pt')
     conversion_name = NotImplemented
     make_pdf = None  # None, 1 or 0
@@ -89,6 +94,36 @@ class DocumentFusionViewlet(StatusViewletMixin, ViewletBase):
         return self.render_viewlet()
 
 
+class StatusView(StatusViewletMixin, BrowserView):
+    def render_status(self):
+        request = self.request
+        self.conversion_name = request.get('conversion', '')
+        self.update()
+        accept_header = request.getHeader('accept', '')
+        if accept_header.lower() in ('application/json', 'text/json'):
+            url = self.context.absolute_url()
+            request.response.setHeader('Content-Type', 'application/json')
+            status = {
+                'conversion': self.conversion_name,
+                'status': self.status['id'],
+                'msg': translate(self.status['msg'], context=request),
+                'statusLabel': translate(self.status['status-label'], context=request),
+                'statusClass': self.status['status-class'],
+                'icon': self.icon_path,
+                'filename': self.filename,
+            }
+            if self.status['allow-retry']:
+                status['refreshUrl'] = '{0}/@@refresh-documentfusion?conversion={1}'.format(
+                    url, self.conversion_name)
+
+            if self.status['downloadable']:
+                status['downloadUrl'] = '{0}/@@download-documentfusion?conversion={1}'.format(
+                    url, self.conversion_name)
+            return json.dumps(status)
+        else:
+            return self.render_viewlet()
+
+
 class DownloadView(BrowserView):
     def __call__(self):
         conversion_name = self.request.get('conversion', '')
@@ -112,7 +147,6 @@ class DownloadView(BrowserView):
 
 
 class RefreshView(StatusViewletMixin, BrowserView):
-
     def enabled(self):
         return True
 
@@ -138,12 +172,3 @@ class RefreshView(StatusViewletMixin, BrowserView):
             redirect_to = "%s/view" % self.context.absolute_url()
 
         return request.response.redirect(redirect_to)
-
-
-class StatusView(StatusViewletMixin, BrowserView):
-
-    def render_status(self):
-        request = self.request
-        self.conversion_name = request.get('conversion', None)
-        self.update()
-        return self.render_viewlet()
