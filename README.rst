@@ -52,7 +52,7 @@ Read the documentation of those services.
 
 
 You can also use docker images. This is quite easier since you have docker infrastructure.
-Your docker-compose will look like this (don't forget to set the image tags):
+Your docker-compose will look like this (don't forget to set the image tags): ::
 
     py3ofusion:
         image: xcgd/py3o.fusion
@@ -143,37 +143,13 @@ each result of the collection will be used as a source.
 Extend
 ======
 
-The way to get data from a content is an adapter of context and request that provides interface
-**collective.documentfusion.interfaces.IFusionData**. This adapter returns a mapping of data to replace in file model.
+Model file
+----------
 
-An example of **IFusionData** adapter:
-
-    class ProjectFusionData(object):
-        adapts(IProject, IMyLayer)
-        implements(IFusionData)
-
-        def __init__(self, context, request):
-            self.context = context
-            self.request = request
-
-        def __call__(self):
-            context = self.context
-            data = {'title': context.Title(), 'description': context.Description'}
-            return data
-
-
-The way to get images from a content is an adapter of context and request that provides interface
-**collective.documentfusion.interfaces.IImageMapping**. The present package provides no default for this adapter.
-This will replace the images named with a 'py3o.staticimage.' prefix like explained here:
-`http://py3otemplate.readthedocs.io/en/latest/templating.html#insert-placeholder-images`
-Note that if you need to include list of images for loops, you will use fusion data (cf `http://py3otemplate.readthedocs.io/en/latest/templating.html#insert-images-from-the-data-dictionary`).
-Mapping format to return is {name of image without 'py3o.staticimage.' prefix: NamedFile with data of image}
-
-
-The way to get the file field from a content is an adapter of context and request that provides interface
+The way to get the model file from a content is an adapter of context and request that provides interface
 **collective.documentfusion.interfaces.IModelFileSource**. It returns a NamedFile containing the model file data.
 
-An example of **IModelFileSource** adapter:
+An example of **IModelFileSource** adapter: ::
 
     MODEL_FILE = os.path.join(os.path.dirname(__file__), 'project-model.odt')
     EXTENDED_MODEL_FILE = os.path.join(os.path.dirname(__file__), 'extended-project-model.odt')
@@ -197,14 +173,69 @@ An example of **IModelFileSource** adapter:
                              filename=unicode(filename) + u'.odt')
 
 
+The class can have a **target_extension** attribute that declares the document type libreoffice will generate.
+
+Note that the NamedFile can be an **html** file. This can be convenient if you want to generate a .pdf or .doc document using an html template. The next example declares an export to .doc that uses an html template: ::
+
+
+    class EventProgramSourceFile(object):
+        adapts(IMyEvent, IMyLayer)
+        index = ViewPageTemplateFile('templates/program.pt')
+        target_extension = 'doc'
+
+        def __init__(self, context, request):
+            self.context, self.request = context, request
+
+        def __call__(self):
+            self.date = self.context.start.strftime("%d/%m/%Y")
+            self.location = self.context.location
+            self.talks = self.context.talks
+            return NamedFile(self.index(),
+                             filename=unicode("program-%s.html" % self.context.id),
+                             contentType='text/html')
+
+
+Data source
+-----------
+
+The way to get **fusion data** from a content is an adapter of context and request that provides interface
+**collective.documentfusion.interfaces.IFusionData**. This adapter returns a mapping of data to replace in file model.
+
+An example of **IFusionData** adapter: ::
+
+    class ProjectFusionData(object):
+        adapts(IProject, IMyLayer)
+        implements(IFusionData)
+
+        def __init__(self, context, request):
+            self.context = context
+            self.request = request
+
+        def __call__(self):
+            context = self.context
+            data = {'title': context.Title(), 'description': context.Description'}
+            return data
+
+
+The way to get **images** from a content is an adapter of context and request that provides interface
+**collective.documentfusion.interfaces.IImageMapping**. The present package provides no default for this adapter.
+This will replace the images named with a 'py3o.staticimage.' prefix like explained here:
+`http://py3otemplate.readthedocs.io/en/latest/templating.html#insert-placeholder-images`
+Note that if you need to include list of images for loops, you will use fusion data (cf `http://py3otemplate.readthedocs.io/en/latest/templating.html#insert-images-from-the-data-dictionary`).
+Mapping format to return is {name of image without 'py3o.staticimage.' prefix: NamedFile with data of image}
+
+
+Multiple data source collections
+--------------------------------
+
 The way to get a list of data contents is an adapter of context and request that provides interface
 **collective.documentfusion.interfaces.IMergeDataSources**.
-
 
 If you need to consolidate data you get from sources during a merge fusion, you can write
 a **collective.documentfusion.interfaces.IFusionDataReducer** adapter
 where you will call IFusionData yourself and consolidate it with previous results.
 The present package provides no default for this adapter.
+
 
 Manual conversion
 =================
@@ -228,7 +259,7 @@ Update document with custom conversion
 
 You will need to subscribe on modified and manually execute refresh_conversion method
 
-For instance (here we use grok for subscriber registration)
+For instance (here we use grok for subscriber registration): ::
 
     @grok.subscribe(IMyProject, IObjectModifiedEvent)
     def update_report(project, event):

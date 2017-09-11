@@ -63,17 +63,17 @@ def convert_document(obj, target_extension=None, make_fusion=False,
        eventually filled with data get from a source
        if we have many sources, we get a merge of this document filled with all
        sources
-        
+
        @param obj: Object
             plone content from which we get
        @param target_extension: string
             The extension of output document. If not set,
             target_extension attribute of IModelSourceFile adapter will be used,
             else the extension of source file
-       
+
        @param make_fusion: bool.
             If true, we will try to get fusion data and inject it into model using py3o.fusion
-       
+
        @param conversion_name: string
             The name of the adapters to get source file, fusion data, image mapping
     """
@@ -101,58 +101,98 @@ def convert_document(obj, target_extension=None, make_fusion=False,
                 )
 
 
-def convert_fs_file(tmp_source_file_path, tmp_converted_file_path, target_ext,
+def convert_fs_file(source_file_path, converted_file_path, target_ext,
                     fusion_data=None, image_mapping=None):
-    """Uses py3o to convert a file stored on fs into an other
-    filling properties, bookmarks and fields with data
+    """Uses py3o to convert a file stored on fs into an other,
+    filling variables with data
     using libreoffice service
     """
-    settings = getUtility(IRegistry).forInterface(ISettings)
 
     if not fusion_data and not image_mapping:
         # this is just a conversion, directly use converter
-        client = RenderClient(settings.conversion_service_host, settings.conversion_service_port)
-        client.render(tmp_source_file_path, tmp_converted_file_path, target_format=target_ext)
+        _convert_without_fusion(source_file_path, converted_file_path, target_ext)
     else:
-        files = {
-            'tmpl_file': open(tmp_source_file_path, 'rb')
-        }
-        if not fusion_data:
-            fusion_data = {}
-        else:
-            fusion_data = {'document': fusion_data}
+        _convert_with_fusion(source_file_path, converted_file_path, target_ext,
+                             fusion_data=fusion_data, image_mapping=image_mapping)
+    assert os.path.exists(converted_file_path)
 
-        fields = {
-            "targetformat": target_ext,
-            "datadict": json.dumps(fusion_data),
-        }
 
-        py3o_image_mapping = {}
-        if image_mapping:
-            for field, image_file in image_mapping.iteritems():
-                py3o_image_mapping['staticimage.' + field] = 'staticimage.' + field
-                fields['staticimage.' + field] = image_file.data
+def _convert_without_fusion(source_file_path, converted_file_path, target_ext):
+    """
+    Create converted file direcly with py3o.renderserver. Do not use py3o.fusion
+    """
+    settings = getUtility(IRegistry).forInterface(ISettings)
+    client = RenderClient(settings.conversion_service_host, settings.conversion_service_port)
+    client.render(source_file_path, converted_file_path, target_format=target_ext)
 
-            fields['image_mapping'] = json.dumps(py3o_image_mapping)
-        else:
-            fields['image_mapping'] = "{}"
 
+def _convert_with_fusion(source_file_path, converted_file_path, target_ext,
+                         fusion_data, image_mapping):
+    """
+    Create converted file using py3o.fusion
+    """
+    tmp_odt_file_path = filename_split(converted_file_path)[0] + '.odt'
+
+    try:
+        if _needs_transitional_odt(source_file_path):
+            # when we need a transitional odt file
+            tmp_odt_file_path = filename_split(converted_file_path)[0] + '.odt'
+            _convert_without_fusion(source_file_path, tmp_odt_file_path, 'odt')
+            source_file_path = tmp_odt_file_path
+
+        files = {'tmpl_file': open(source_file_path, 'rb')}
+        fields = _get_py3o_fields(target_ext=target_ext,
+                                  fusion_data=fusion_data,
+                                  image_mapping=image_mapping)
+
+        settings = getUtility(IRegistry).forInterface(ISettings)
+        url = "http://%s:%s/form" % (settings.fusion_service_host, settings.fusion_service_port)
         req = requests.post(
-            "http://%s:%s/form" % (settings.fusion_service_host, settings.fusion_service_port),
-            data=fields,
+            url,
             files=files,
+            data=fields,
             timeout=settings.fusion_timeout,
         )
-        if req.status_code != 400:
+        if 200 <= req.status_code < 300:
             chunk_size = 1024
-            with open(tmp_converted_file_path, 'wb') as fd:
+            with open(converted_file_path, 'wb') as fd:
                 for chunk in req.iter_content(chunk_size):
                     fd.write(chunk)
         else:
             logger.error("Failed to convert file: %s with data: %s", files, fields)
-            raise Py3oException("py3o.fusion server error: %s", req.text)
+            raise Py3oException("py3o.fusion server error (%s): %s", req.status_code, req.text)
+    finally:
+        remove_if_exists(tmp_odt_file_path)
 
-    assert os.path.exists(tmp_converted_file_path)
+
+def _needs_transitional_odt(source_file_path):
+    """Returns True if py3o can't directly handle source file type
+    """
+    return filename_split(source_file_path)[1] in ('html',)  # TODO: test more types
+
+
+def _get_py3o_fields(target_ext, fusion_data, image_mapping):
+    if not fusion_data:
+        fusion_data = {}
+    else:
+        fusion_data = {'document': fusion_data}
+
+    fields = {
+        "targetformat": target_ext,
+        "datadict": json.dumps(fusion_data),
+    }
+
+    py3o_image_mapping = {}
+    if image_mapping:
+        for field, image_file in image_mapping.iteritems():
+            py3o_image_mapping['staticimage.' + field] = 'staticimage.' + field
+            fields['staticimage.' + field] = image_file.data
+
+        fields['image_mapping'] = json.dumps(py3o_image_mapping)
+    else:
+        fields['image_mapping'] = "{}"
+
+    return fields
 
 
 def get_converted_file(named_file, target_ext, fusion_data=None, image_mapping=None):
