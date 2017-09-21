@@ -281,3 +281,4 @@ Bypassing auto refresh
 Refresh is done at each document modification (on IObjectModified event).
 You can globally disable this with auto_refresh_enabled registry setting.
 You can globally disable it on the fly setting PREVENT_REFRESH_KEY value to True on request object.
+
